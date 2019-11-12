@@ -61,7 +61,7 @@ unsigned int inputdevice_finalized = 0;
 //#include "libretro-keyboard.i"
 
 extern void retro_poll_event(void);
-unsigned int uae_devices[4];
+unsigned int uae_devices[2];
 extern int cd32_pad_enabled[NORMAL_JPORTS];
 
 static char buf[64][4096]={0};
@@ -151,33 +151,19 @@ static char uae_config[1024];
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_controller_description p1_controllers[] ={
-      { "CD32 Pad", RETRO_DEVICE_UAE_CD32PAD },
+//      { "CD32 Pad", RETRO_DEVICE_UAE_CD32PAD },
       { "Joystick", RETRO_DEVICE_UAE_JOYSTICK },
-      { "Keyboard", RETRO_DEVICE_UAE_KEYBOARD },
       { "None", RETRO_DEVICE_NONE },
    };
    static const struct retro_controller_description p2_controllers[] = {
-      { "CD32 Pad", RETRO_DEVICE_UAE_CD32PAD },
+//      { "CD32 Pad", RETRO_DEVICE_UAE_CD32PAD },
       { "Joystick", RETRO_DEVICE_UAE_JOYSTICK },
-      { "Keyboard", RETRO_DEVICE_UAE_KEYBOARD },
-      { "None", RETRO_DEVICE_NONE },
-   };
-   static const struct retro_controller_description p3_controllers[] = {
-      { "Joystick", RETRO_DEVICE_UAE_JOYSTICK },
-      { "Keyboard", RETRO_DEVICE_UAE_KEYBOARD },
-      { "None", RETRO_DEVICE_NONE },
-   };
-   static const struct retro_controller_description p4_controllers[] = {
-      { "Joystick", RETRO_DEVICE_UAE_JOYSTICK },
-      { "Keyboard", RETRO_DEVICE_UAE_KEYBOARD },
       { "None", RETRO_DEVICE_NONE },
    };
 
    static const struct retro_controller_info ports[] = {
-      { p1_controllers, 4 }, // port 1
-      { p2_controllers, 4 }, // port 2
-      { p3_controllers, 3 }, // port 3
-      { p4_controllers, 3 }, // port 4
+      { p1_controllers, 2 }, // port 1
+      { p2_controllers, 2 }, // port 2
       { NULL, 0 }
    };
 
@@ -778,7 +764,7 @@ unsigned retro_api_version(void)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-   if (port<4)
+   if (port<2)
    {
       uae_devices[port]=device;
       int uae_port;

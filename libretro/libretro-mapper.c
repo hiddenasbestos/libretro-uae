@@ -62,7 +62,7 @@ extern void retro_mouse(int, int, int);
 extern void retro_mouse_button(int, int, int);
 extern void retro_joystick(int, int, int);
 extern void retro_joystick_button(int, int, int);
-extern unsigned int uae_devices[4];
+extern unsigned int uae_devices[2];
 extern int video_config;
 extern int video_config_aspect;
 extern int zoom_mode_id;
@@ -383,7 +383,7 @@ void retro_poll_event()
       static int i=0,j=0;
 
       int retro_port;
-      for (retro_port = 0; retro_port <= 3; retro_port++)
+      for (retro_port = 0; retro_port <= 1; retro_port++)
       {
          switch (uae_devices[retro_port])
          {
