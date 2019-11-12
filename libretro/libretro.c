@@ -41,8 +41,6 @@ int opt_statusbar_position = 0;
 int opt_statusbar_position_old = 0;
 int opt_statusbar_position_offset = 0;
 int opt_statusbar_position_offset_lores = 0;
-bool opt_keyrahkeypad = false;
-bool opt_keyboard_pass_through = false;
 int pix_bytes = 2;
 static bool pix_bytes_initialized = false;
 bool fake_ntsc = false;
@@ -80,24 +78,12 @@ unsigned int video_config_geometry = 0;
 unsigned int video_config_allow_hz_change = 0;
 unsigned int inputdevice_finalized = 0;
 
-#include "libretro-keyboard.i"
-int keyId(const char *val)
-{
-   int i=0;
-   while (keyDesc[i]!=NULL)
-   {
-      if (!strcmp(keyDesc[i],val))
-         return keyVal[i];
-      i++;
-   }
-   return 0;
-}
+//#include "libretro-keyboard.i"
 
 extern void retro_poll_event(void);
 unsigned int uae_devices[4];
 extern int cd32_pad_enabled[NORMAL_JPORTS];
 
-int mapper_keys[31]={0};
 static char buf[64][4096]={0};
 
 #ifdef WIN32
@@ -573,255 +559,8 @@ void retro_set_environment(retro_environment_t cb)
          },
          "enabled"
       },
-      {
-         "puae_keyrah_keypad_mappings",
-         "Keyrah Keypad Mappings",
-         "Hardcoded keypad to joy mappings for Keyrah hardware.",
-         {
-            { "disabled", NULL },
-            { "enabled", NULL },
-            { NULL, NULL },
-         },
-         "disabled"
-      },
-      {
-         "puae_physical_keyboard_pass_through",
-         "Physical Keyboard Pass-through",
-         "Pass all physical keyboard events to the core. Disable this to prevent cursor keys and fire key from generating Amiga key events.",
-         {
-            { "disabled", NULL },
-            { "enabled", NULL },
-            { NULL, NULL },
-         },
-         "disabled"
-      },
-      /* Hotkeys */
-      {
-         "puae_mapper_vkbd",
-         "Hotkey: Toggle Virtual Keyboard",
-         "Pressing a button mapped to this key opens the keyboard.",
-         {{ NULL, NULL }},
-         "RETROK_F11"
-      },
-      {
-         "puae_mapper_statusbar",
-         "Hotkey: Toggle Statusbar",
-         "Pressing a button mapped to this key toggles the statusbar.",
-         {{ NULL, NULL }},
-         "RETROK_F10"
-      },
-      {
-         "puae_mapper_mouse_toggle",
-         "Hotkey: Toggle Mouse",
-         "Pressing a button mapped to this key toggles between joystick and mouse control.",
-         {{ NULL, NULL }},
-         "RETROK_RCTRL"
-      },
-      {
-         "puae_mapper_reset",
-         "Hotkey: Reset",
-         "Ctrl-Amiga-Amiga combination.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_aspect_ratio_toggle",
-         "Hotkey: Toggle Aspect Ratio",
-         "Only usable with PAL video.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_zoom_mode_toggle",
-         "Hotkey: Toggle Zoom Mode",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      /* Button mappings */
-      {
-         "puae_mapper_select",
-         "RetroPad Select",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_start",
-         "RetroPad Start",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_a",
-         "RetroPad A",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_y",
-         "RetroPad Y",
-         "",
-         {{ NULL, NULL }},
-         "RETROK_SPACE"
-      },
-      {
-         "puae_mapper_x",
-         "RetroPad X",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_l",
-         "RetroPad L",
-         "",
-         {{ NULL, NULL }},
-         "RETROK_F11"
-      },
-      {
-         "puae_mapper_r",
-         "RetroPad R",
-         "",
-         {{ NULL, NULL }},
-         "RETROK_F10"
-      },
-      {
-         "puae_mapper_l2",
-         "RetroPad L2",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_r2",
-         "RetroPad R2",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_l3",
-         "RetroPad L3",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_r3",
-         "RetroPad R3",
-         "",
-         {{ NULL, NULL }},
-         "---"
-      },
-      /* Left Stick */
-      {
-         "puae_mapper_lu",
-         "RetroPad L-Up",
-         "Mapping for left analog stick up.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_ld",
-         "RetroPad L-Down",
-         "Mapping for left analog stick down.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_ll",
-         "RetroPad L-Left",
-         "Mapping for left analog stick left.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_lr",
-         "RetroPad L-Right",
-         "Mapping for left analog stick right.",
-         {{ NULL, NULL }},
-         "---"
-      },
-
-      /* Right Stick */
-      {
-         "puae_mapper_ru",
-         "RetroPad R-Up",
-         "Mapping for right analog stick up.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_rd",
-         "RetroPad R-Down",
-         "Mapping for right analog stick down.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_rl",
-         "RetroPad R-Left",
-         "Mapping for right analog stick left.",
-         {{ NULL, NULL }},
-         "---"
-      },
-      {
-         "puae_mapper_rr",
-         "RetroPad R-Right",
-         "Mapping for right analog stick right.",
-         {{ NULL, NULL }},
-         "---"
-      },
       { NULL, NULL, NULL, {{0}}, NULL },
    };
-
-   /* fill in the values for all the mappers */
-   int i = 0;
-   int j = 0;
-   int hotkey = 0;
-   while (core_options[i].key)
-   {
-      if (strstr(core_options[i].key, "puae_mapper_"))
-      {
-         /* Show different key list for hotkeys (special negatives removed) */
-         if (  strstr(core_options[i].key, "puae_mapper_vkbd")
-            || strstr(core_options[i].key, "puae_mapper_statusbar")
-            || strstr(core_options[i].key, "puae_mapper_mouse_toggle")
-            || strstr(core_options[i].key, "puae_mapper_reset")
-            || strstr(core_options[i].key, "puae_mapper_aspect_ratio_toggle")
-            || strstr(core_options[i].key, "puae_mapper_zoom_mode_toggle")
-         )
-            hotkey = 1;
-         else
-            hotkey = 0;
-
-         j = 0;
-         if (hotkey)
-         {
-             while (keyDescHotkeys[j] && j < RETRO_NUM_CORE_OPTION_VALUES_MAX - 1)
-             {
-                core_options[i].values[j].value = keyDescHotkeys[j];
-                core_options[i].values[j].label = NULL;
-                ++j;
-             };
-         }
-         else
-         {
-             while (keyDesc[j] && j < RETRO_NUM_CORE_OPTION_VALUES_MAX - 1)
-             {
-                core_options[i].values[j].value = keyDesc[j];
-                core_options[i].values[j].label = NULL;
-                ++j;
-             };
-         }
-         core_options[i].values[j].value = NULL;
-         core_options[i].values[j].label = NULL;
-      };
-      ++i;
-   }
 
    environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
@@ -833,7 +572,7 @@ void retro_set_environment(retro_environment_t cb)
    {
       /* Fallback for older API */
       static struct retro_variable variables[64] = { 0 };
-      i = 0;
+      int i = 0;
       while (core_options[i].key)
       {
          buf[i][0] = 0;
@@ -841,7 +580,7 @@ void retro_set_environment(retro_environment_t cb)
          strcpy(buf[i], core_options[i].desc);
          strcat(buf[i], "; ");
          strcat(buf[i], core_options[i].default_value);
-         j = 0;
+         int j = 0;
          while (core_options[i].values[j].value && j < RETRO_NUM_CORE_OPTION_VALUES_MAX)
          {
             strcat(buf[i], "|");
@@ -1422,203 +1161,6 @@ static void update_variables(void)
       if (strcmp(var.value, "disabled") == 0)
         opt_use_whdload_hdf = false;
    }
-
-   var.key = "puae_keyrah_keypad_mappings";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0) opt_keyrahkeypad=false;
-      else if (strcmp(var.value, "enabled") == 0) opt_keyrahkeypad=true;
-   }
-
-   var.key = "puae_physical_keyboard_pass_through";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0) opt_keyboard_pass_through=false;
-      else if (strcmp(var.value, "enabled") == 0) opt_keyboard_pass_through=true;
-   }
-
-   var.key = "puae_mapper_select";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_SELECT] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_start";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_START] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_a";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_A] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_y";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_Y] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_x";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_X] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_l";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_L] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_r";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_R] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_l2";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_L2] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_r2";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_R2] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_l3";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_L3] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_r3";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[RETRO_DEVICE_ID_JOYPAD_R3] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_lr";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[16] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_ll";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[17] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_ld";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[18] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_lu";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[19] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_rr";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[20] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_rl";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[21] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_rd";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[22] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_ru";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[23] = keyId(var.value);
-   }
-
-
-   /* Mapper hotkeys */
-   var.key = "puae_mapper_vkbd";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[24] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_statusbar";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[25] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_mouse_toggle";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[26] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_reset";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[27] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_aspect_ratio_toggle";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[28] = keyId(var.value);
-   }
-
-   var.key = "puae_mapper_zoom_mode_toggle";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      mapper_keys[29] = keyId(var.value);
-   }
-
-
 
 
    // Setting resolution
