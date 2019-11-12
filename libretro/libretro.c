@@ -964,7 +964,7 @@ void retro_set_environment(retro_environment_t cb)
       };
       ++i;
    }
-   
+
    environ_cb = cb;
    cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 
@@ -1265,8 +1265,8 @@ static void update_variables(void)
       strcat(uae_config, "sound_filter=");
       strcat(uae_config, var.value);
       strcat(uae_config, "\n");
-      
-      if (strcmp(var.value, "emulated") == 0) changed_prefs.sound_filter=FILTER_SOUND_EMUL; 
+
+      if (strcmp(var.value, "emulated") == 0) changed_prefs.sound_filter=FILTER_SOUND_EMUL;
       else if (strcmp(var.value, "off") == 0) changed_prefs.sound_filter=FILTER_SOUND_OFF;
       else if (strcmp(var.value, "on") == 0) changed_prefs.sound_filter=FILTER_SOUND_ON;
    }
@@ -1898,12 +1898,12 @@ static void retro_wrap_emulator(void)
    static char *argv[] = { "puae", RPATH };
    umain(sizeof(argv)/sizeof(*argv), argv);
 
-   environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, 0); 
+   environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, 0);
 
    /* We're done here */
    co_switch(mainThread);
 
-   /* Dead emulator, 
+   /* Dead emulator,
     * but libco says not to return. */
    while (true)
    {
@@ -1926,7 +1926,7 @@ static bool disk_set_eject_state(bool ejected)
 			return true;
 		else
 			dc->eject_state = ejected;
-		
+
 		if (dc->eject_state)
 		{
 			changed_prefs.floppyslots[0].df[0] = 0;
@@ -1962,7 +1962,7 @@ static bool disk_get_eject_state(void)
 {
 	if (dc)
 		return dc->eject_state;
-	
+
 	return true;
 }
 
@@ -1970,7 +1970,7 @@ static unsigned disk_get_image_index(void)
 {
 	if (dc)
 		return dc->index;
-	
+
 	return 0;
 }
 
@@ -2156,7 +2156,7 @@ void retro_init(void)
 }
 
 void retro_deinit(void)
-{	
+{
    if (emuThread)
       co_delete(emuThread);
    emuThread = 0;
@@ -2216,7 +2216,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->library_name     = "PUAE";
    info->library_version  = "2.6.1" GIT_VERSION;
    info->need_fullpath    = true;
-   info->block_extract    = false;	
+   info->block_extract    = false;
    info->valid_extensions = "adf|dms|fdi|ipf|zip|hdf|hdz|uae|m3u";
 }
 
@@ -2468,7 +2468,7 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
 
       /* Need proper values for calculations */
       if (thisframe_first_drawn_line != thisframe_last_drawn_line
-      && thisframe_first_drawn_line > 0 && thisframe_last_drawn_line > 0 
+      && thisframe_first_drawn_line > 0 && thisframe_last_drawn_line > 0
       && thisframe_first_drawn_line < 100 && thisframe_last_drawn_line > 200
       )
          thisframe_y_adjust_new = (thisframe_last_drawn_line - thisframe_first_drawn_line - zoomed_height_normal) / 2 + thisframe_first_drawn_line; // Smart
@@ -2639,11 +2639,11 @@ bool retro_load_game(const struct retro_game_info *info)
    int w = 0, h = 0;
 
    RPATH[0] = '\0';
-  
+
    if (info)
    {
       const char *full_path = (const char*)info->path;
-			
+
 	  // If argument is a disk or hard drive image file
 	  if (  strendswith(full_path, ADF_FILE_EXT)
          || strendswith(full_path, FDI_FILE_EXT)
@@ -2907,7 +2907,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-   if (w<=0 || h<=0 || w>EMULATOR_MAX_WIDTH || h>EMULATOR_MAX_HEIGHT) 
+   if (w<=0 || h<=0 || w>EMULATOR_MAX_WIDTH || h>EMULATOR_MAX_HEIGHT)
    {
       w = defaultw;
       h = defaulth;

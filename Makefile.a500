@@ -1,3 +1,4 @@
+TARGET_NAME := puae_a500
 
 PLATFLAGS :=
 
@@ -16,9 +17,7 @@ else ifneq ($(findstring arm,$(shell uname -a)),)
 endif
 endif
 
-TARGET_NAME := puae
-
-GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
+GIT_VERSION := "$(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
 	CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
@@ -267,6 +266,8 @@ DEFINES += -DCPUEMU_0 -DCPUEMU_11 -DCPUEMU_12 -DCPUEMU_20 -DCPUEMU_21 -DCPUEMU_2
 # -DENFORCER -DXARCADE -DSCSIEMU -DSCSIEMU_LINUX_IOCTL -DUSE_SDL -DBSDSOCKET -DCDTV -DCD32  -DA2091 -DNCR  -DGAYLE
 DEFINES += -D__LIBRETRO__
 CFLAGS += $(DEFINES) -DRETRO=1 -DINLINE="inline" -std=gnu99
+
+DEFINES += -DFORCE_MACHINE=500
 
 include Makefile.common
 
