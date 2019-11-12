@@ -785,10 +785,6 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
             printf("Controller %u: Joystick\n", (port+1));
             break;
 
-         case RETRO_DEVICE_UAE_KEYBOARD:
-            printf("Controller %u: Keyboard\n", (port+1));
-            break;
-
          case RETRO_DEVICE_NONE:
             printf("Controller %u: Unplugged\n", (port+1));
             break;
