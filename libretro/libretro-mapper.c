@@ -90,10 +90,6 @@ extern unsigned int opt_dpadmouse_speed;
 extern bool opt_multimouse;
 extern bool opt_keyrahkeypad;
 extern bool opt_keyboard_pass_through;
-int turbo_fire_button=-1;
-unsigned int turbo_pulse=2;
-unsigned int turbo_state[5]={0};
-unsigned int turbo_toggle[5]={0};
 
 enum EMU_FUNCTIONS {
    EMU_VKBD = 0,
@@ -180,7 +176,7 @@ void retro_set_input_poll(retro_input_poll_t cb)
 #ifdef MDEBUG
 #define mprintf printf
 #else
-#define mprintf(...) 
+#define mprintf(...)
 #endif
 
 #ifdef WIIU
@@ -201,7 +197,7 @@ long GetTicks(void)
    gettimeofday (&tv, NULL);
    return (tv.tv_sec*1000000 + tv.tv_usec)/1000;
 #endif
-} 
+}
 
 char* joystick_value_human(int val[16])
 {
@@ -650,7 +646,7 @@ void ProcessController(int retro_port, int i)
          }
       }
    }
-   else if (i != turbo_fire_button) // Buttons
+   else // Buttons
    {
       uae_button = retro_button_to_uae_button(i);
       if (uae_button != -1)
@@ -666,47 +662,6 @@ void ProcessController(int retro_port, int i)
             retro_joystick_button(retro_port, uae_button, 0);
             jflag[retro_port][i]=0;
          }
-      }
-   }
-}
-
-void ProcessTurbofire(int retro_port, int i)
-{
-   if (turbo_fire_button != -1 && i == turbo_fire_button)
-   {
-      if (input_state_cb(retro_port, RETRO_DEVICE_JOYPAD, 0, turbo_fire_button))
-      {
-         if (turbo_state[retro_port])
-         {
-            if ((turbo_toggle[retro_port]) == (turbo_pulse))
-               turbo_toggle[retro_port]=1;
-            else
-               turbo_toggle[retro_port]++;
-
-            if (turbo_toggle[retro_port] > (turbo_pulse / 2))
-            {
-               retro_joystick_button(retro_port, 0, 0);
-               jflag[retro_port][RETRO_DEVICE_ID_JOYPAD_B]=0;
-            }
-            else
-            {
-               retro_joystick_button(retro_port, 0, 1);
-               jflag[retro_port][RETRO_DEVICE_ID_JOYPAD_B]=1;
-            }
-         }
-         else
-         {
-            turbo_state[retro_port]=1;
-            retro_joystick_button(retro_port, 0, 1);
-            jflag[retro_port][RETRO_DEVICE_ID_JOYPAD_B]=1;
-         }
-      }
-      else if (!input_state_cb(retro_port, RETRO_DEVICE_JOYPAD, 0, turbo_fire_button) && turbo_state[retro_port]==1)
-      {
-         turbo_state[retro_port]=0;
-         turbo_toggle[retro_port]=1;
-         retro_joystick_button(retro_port, 0, 0);
-         jflag[retro_port][RETRO_DEVICE_ID_JOYPAD_B]=0;
       }
    }
 }
@@ -732,7 +687,7 @@ void ProcessKey(int disable_physical_cursor_keys)
          else if (!key_state[i] && key_state2[i]==1)
             key_state2[i]=0;
       }
-      /* Special key (Right Alt) for overriding RetroPad cursor override */ 
+      /* Special key (Right Alt) for overriding RetroPad cursor override */
       else if (keyboard_translation[i]==AK_RALT)
       {
          if (key_state[i] && key_state2[i]==0)
@@ -860,7 +815,7 @@ void update_input(int disable_physical_cursor_keys)
       }
    }
 
-   
+
 
    /* The check for kbt[i] here prevents the hotkey from generating key events */
    /* SHOWKEY check is now in ProcessKey to allow certain keys while SHOWKEY */
@@ -900,9 +855,9 @@ void update_input(int disable_physical_cursor_keys)
                if (SHOWKEY==1 && (i==RETRO_DEVICE_ID_JOYPAD_A || i==RETRO_DEVICE_ID_JOYPAD_X))
                   continue;
 
-               if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) && jbt[j][i]==0 && i!=turbo_fire_button)
+               if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) && jbt[j][i]==0)
                   just_pressed = 1;
-               else if (!input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) && jbt[j][i]==1 && i!=turbo_fire_button)
+               else if (!input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, i) && jbt[j][i]==1)
                   just_released = 1;
             }
             else if (i >= 16) /* Remappable RetroPad analog stick directions */
@@ -1171,7 +1126,7 @@ void update_input(int disable_physical_cursor_keys)
 void retro_poll_event()
 {
    /* If RetroPad is controlled with keyboard keys, then prevent up/down/left/right/fire/fire2 from generating keyboard key presses */
-   if (uae_devices[0] == RETRO_DEVICE_JOYPAD && ALTON==-1 && 
+   if (uae_devices[0] == RETRO_DEVICE_JOYPAD && ALTON==-1 &&
       (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B) ||
        input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)
        ) &&
@@ -1223,7 +1178,6 @@ void retro_poll_event()
 
                      ProcessController(retro_port, i);
                   }
-                  ProcessTurbofire(retro_port, i);
                }
                break;
 
@@ -1234,7 +1188,6 @@ void retro_poll_event()
                   {
                      ProcessController(retro_port, i);
                   }
-                  ProcessTurbofire(retro_port, i);
                }
                break;
 
@@ -1249,7 +1202,7 @@ void retro_poll_event()
                break;
          }
       }
-   
+
       // Mouse control
       uae_mouse_l[0]=uae_mouse_r[0]=uae_mouse_m[0]=0;
       uae_mouse_l[1]=uae_mouse_r[1]=uae_mouse_m[0]=0;
