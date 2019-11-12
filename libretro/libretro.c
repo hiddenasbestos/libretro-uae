@@ -35,7 +35,7 @@ int retrow = 0;
 int retroh = 0;
 char key_state[512];
 char key_state2[512];
-bool opt_use_whdload_hdf = true;
+bool opt_use_whdload_hdf = false;
 int pix_bytes = 2;
 static bool pix_bytes_initialized = false;
 bool fake_ntsc = false;
@@ -370,11 +370,11 @@ void retro_set_environment(retro_environment_t cb)
 			variables[i].key = core_options[i].key;
 			strcpy(buf[i], core_options[i].desc);
 			strcat(buf[i], "; ");
-			// strcat(buf[i], core_options[i].default_value);
+			strcat(buf[i], core_options[i].default_value);
 			int j = 0;
 			while (core_options[i].values[j].value && j < RETRO_NUM_CORE_OPTION_VALUES_MAX)
 			{
-				if ( j > 0 )
+				//if ( j > 0 )
 					strcat(buf[i], "|");
 				strcat(buf[i], core_options[i].values[j].value);
 				++j;
@@ -460,16 +460,9 @@ static void update_variables(void)
             strcat(uae_config, "ntsc=true\n");
             real_ntsc = true;
          }
-      else
-      {
-         if (strcmp(var.value, "PAL") == 0)
-            changed_prefs.ntscmode=0;
-         else
-            changed_prefs.ntscmode=1;
-      }
    }
 
-   video_config_allow_hz_change = 1;
+   video_config_allow_hz_change = 0;
 
 	strcat(uae_config, "cpu_compatible=true\n");
 	strcat(uae_config, "cycle_exact=true\n");
@@ -480,45 +473,21 @@ static void update_variables(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (firstpass != 1)
-      {
-         if (strcmp(var.value, "normal") == 0)
-         {
-            changed_prefs.cpu_compatible=0;
-            changed_prefs.cpu_cycle_exact=0;
-            changed_prefs.blitter_cycle_exact=0;
-         }
-         else if (strcmp(var.value, "compatible") == 0)
-         {
-            changed_prefs.cpu_compatible=1;
-            changed_prefs.cpu_cycle_exact=0;
-            changed_prefs.blitter_cycle_exact=0;
-         }
-         else if (strcmp(var.value, "exact") == 0)
-         {
-            changed_prefs.cpu_compatible=1;
-            changed_prefs.cpu_cycle_exact=1;
-            changed_prefs.blitter_cycle_exact=1;
-         }
-      }
-      else
-      {
-         if (strcmp(var.value, "normal") == 0)
-         {
-            strcat(uae_config, "cpu_compatible=false\n");
-            strcat(uae_config, "cycle_exact=false\n");
-         }
-         else if (strcmp(var.value, "compatible") == 0)
-         {
-            strcat(uae_config, "cpu_compatible=true\n");
-            strcat(uae_config, "cycle_exact=false\n");
-         }
-         else if (strcmp(var.value, "exact") == 0)
-         {
-            strcat(uae_config, "cpu_compatible=true\n");
-            strcat(uae_config, "cycle_exact=true\n");
-         }
-      }
+	 if (strcmp(var.value, "normal") == 0)
+	 {
+		strcat(uae_config, "cpu_compatible=false\n");
+		strcat(uae_config, "cycle_exact=false\n");
+	 }
+	 else if (strcmp(var.value, "compatible") == 0)
+	 {
+		strcat(uae_config, "cpu_compatible=true\n");
+		strcat(uae_config, "cycle_exact=false\n");
+	 }
+	 else if (strcmp(var.value, "exact") == 0)
+	 {
+		strcat(uae_config, "cpu_compatible=true\n");
+		strcat(uae_config, "cycle_exact=true\n");
+	 }
    }
 */
    var.key = "puae_sound_output";
@@ -722,25 +691,6 @@ static void update_variables(void)
          pix_bytes_initialized = true;
       }
    }*/
-
-   var.key = "puae_gfx_center_horizontal";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "gfx_center_horizontal=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (firstpass != 1)
-      {
-         int val;
-         if (strcmp(var.value, "none") == 0) val=0;
-         else if (strcmp(var.value, "simple") == 0) val=1;
-         else if (strcmp(var.value, "smart") == 0) val=2;
-         changed_prefs.gfx_xcenter=val;
-      }
-   }
 
    var.key = "puae_use_whdload";
    var.value = NULL;
