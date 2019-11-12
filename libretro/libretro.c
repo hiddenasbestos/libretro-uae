@@ -41,8 +41,6 @@ static bool pix_bytes_initialized = false;
 bool fake_ntsc = false;
 bool real_ntsc = false;
 bool request_update_av_info = false;
-int zoom_mode_id = 0;
-int zoomed_height;
 
 #if defined(NATMEM_OFFSET)
 extern uae_u8 *natmem_offset;
@@ -54,19 +52,8 @@ extern int SHIFTON;
 extern char RPATH[512];
 static int firstpass = 1;
 extern int prefs_changed;
-int opt_vertical_offset = 0;
-bool opt_vertical_offset_auto = true;
-extern int minfirstline;
-extern int thisframe_first_drawn_line;
-static int thisframe_first_drawn_line_old = -1;
-extern int thisframe_last_drawn_line;
-static int thisframe_last_drawn_line_old = -1;
-extern int thisframe_y_adjust;
-static int thisframe_y_adjust_old = 0;
-static int thisframe_y_adjust_update_frame_timer = 3;
 unsigned int video_config = 0;
 unsigned int video_config_old = 0;
-unsigned int video_config_aspect = 0;
 unsigned int video_config_geometry = 0;
 unsigned int video_config_allow_hz_change = 0;
 unsigned int inputdevice_finalized = 0;
@@ -154,10 +141,7 @@ chipset=aga\n"
 #define PUAE_VIDEO_NTSC 	0x02
 #define PUAE_VIDEO_HIRES 	0x04
 
-#define PUAE_VIDEO_PAL_LO 	PUAE_VIDEO_PAL
 #define PUAE_VIDEO_PAL_HI 	PUAE_VIDEO_PAL|PUAE_VIDEO_HIRES
-
-#define PUAE_VIDEO_NTSC_LO 	PUAE_VIDEO_NTSC
 #define PUAE_VIDEO_NTSC_HI 	PUAE_VIDEO_NTSC|PUAE_VIDEO_HIRES
 
 static char uae_machine[256];
@@ -215,17 +199,6 @@ void retro_set_environment(retro_environment_t cb)
          "A500"
       },*/
       {
-         "puae_video_hires",
-         "High Resolution",
-         "Restart required.",
-         {
-            { "false", "disabled" },
-            { "true", "enabled" },
-            { NULL, NULL },
-         },
-         "true"
-      },
-      {
          "puae_video_standard",
          "Video Standard",
          "",
@@ -235,93 +208,6 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "PAL"
-      },
-      {
-         "puae_video_aspect",
-         "Aspect Ratio",
-         "",
-         {
-            { "auto", "Automatic" },
-            { "PAL", NULL },
-            { "NTSC", NULL },
-            { NULL, NULL },
-         },
-         "auto"
-      },
-      {
-         "puae_video_allow_hz_change",
-         "Allow PAL/NTSC Hz Change",
-         "",
-         {
-            { "enabled", NULL },
-            { "disabled", NULL },
-            { NULL, NULL },
-         },
-         "enabled"
-      },
-      {
-         "puae_zoom_mode",
-         "Zoom Mode",
-         "Requirements in RetroArch settings:\nAspect Ratio: Core provided,\nInteger Scale: Off.",
-         {
-            { "none", "disabled" },
-            { "minimum", "Minimum" },
-            { "smaller", "Smaller" },
-            { "small", "Small" },
-            { "medium", "Medium" },
-            { "large", "Large" },
-            { "larger", "Larger" },
-            { "maximum", "Maximum" },
-            { "auto", "Automatic" },
-            { NULL, NULL },
-         },
-         "none"
-      },
-      {
-         "puae_vertical_pos",
-         "Vertical Position",
-         "Automatic keeps zoom modes centered. Positive values force the screen upward and negative values downward.",
-         {
-            { "auto", "Automatic" },
-            { "0", NULL },
-            { "2", NULL },
-            { "4", NULL },
-            { "6", NULL },
-            { "8", NULL },
-            { "10", NULL },
-            { "12", NULL },
-            { "14", NULL },
-            { "16", NULL },
-            { "18", NULL },
-            { "20", NULL },
-            { "22", NULL },
-            { "24", NULL },
-            { "26", NULL },
-            { "28", NULL },
-            { "30", NULL },
-            { "32", NULL },
-            { "34", NULL },
-            { "36", NULL },
-            { "38", NULL },
-            { "40", NULL },
-            { "42", NULL },
-            { "44", NULL },
-            { "46", NULL },
-            { "48", NULL },
-            { "50", NULL },
-            { "-20", NULL },
-            { "-18", NULL },
-            { "-16", NULL },
-            { "-14", NULL },
-            { "-12", NULL },
-            { "-10", NULL },
-            { "-8", NULL },
-            { "-6", NULL },
-            { "-4", NULL },
-            { "-2", NULL },
-            { NULL, NULL },
-         },
-         "auto"
       },
       /*{
          "puae_gfx_colors",
@@ -475,29 +361,30 @@ void retro_set_environment(retro_environment_t cb)
       cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS, core_options);
    else
    {
-      /* Fallback for older API */
-      static struct retro_variable variables[64] = { 0 };
-      int i = 0;
-      while (core_options[i].key)
-      {
-         buf[i][0] = 0;
-         variables[i].key = core_options[i].key;
-         strcpy(buf[i], core_options[i].desc);
-         strcat(buf[i], "; ");
-         strcat(buf[i], core_options[i].default_value);
-         int j = 0;
-         while (core_options[i].values[j].value && j < RETRO_NUM_CORE_OPTION_VALUES_MAX)
-         {
-            strcat(buf[i], "|");
-            strcat(buf[i], core_options[i].values[j].value);
-            ++j;
-         };
-         variables[i].value = buf[i];
-         ++i;
-      };
-      variables[i].key = NULL;
-      variables[i].value = NULL;
-      cb( RETRO_ENVIRONMENT_SET_VARIABLES, variables);
+		/* Fallback for older API */
+		static struct retro_variable variables[64] = { 0 };
+		int i = 0;
+		while (core_options[i].key)
+		{
+			buf[i][0] = 0;
+			variables[i].key = core_options[i].key;
+			strcpy(buf[i], core_options[i].desc);
+			strcat(buf[i], "; ");
+			// strcat(buf[i], core_options[i].default_value);
+			int j = 0;
+			while (core_options[i].values[j].value && j < RETRO_NUM_CORE_OPTION_VALUES_MAX)
+			{
+				if ( j > 0 )
+					strcat(buf[i], "|");
+				strcat(buf[i], core_options[i].values[j].value);
+				++j;
+			};
+			variables[i].value = buf[i];
+			++i;
+		};
+		variables[i].key = NULL;
+		variables[i].value = NULL;
+		cb( RETRO_ENVIRONMENT_SET_VARIABLES, variables);
    }
 
    static bool allowNoGameMode;
@@ -582,35 +469,7 @@ static void update_variables(void)
       }
    }
 
-   var.key = "puae_video_aspect";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "PAL") == 0) video_config_aspect = PUAE_VIDEO_PAL;
-      else if (strcmp(var.value, "NTSC") == 0) video_config_aspect = PUAE_VIDEO_NTSC;
-      else video_config_aspect = 0;
-   }
-
-   var.key = "puae_video_allow_hz_change";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "enabled") == 0) video_config_allow_hz_change = 1;
-      else if (strcmp(var.value, "disabled") == 0) video_config_allow_hz_change = 0;
-   }
-
-   var.key = "puae_video_hires";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "true") == 0)
-         video_config |= PUAE_VIDEO_HIRES;
-      else
-         video_config &= ~PUAE_VIDEO_HIRES;
-   }
+   video_config_allow_hz_change = 1;
 
 	strcat(uae_config, "cpu_compatible=true\n");
 	strcat(uae_config, "cycle_exact=true\n");
@@ -789,23 +648,6 @@ static void update_variables(void)
       }
    }
 
-   var.key = "puae_mouse_speed";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "input.mouse_speed=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (firstpass != 1)
-      {
-         int val;
-         val = atoi(var.value);
-         changed_prefs.input_mouse_speed=val;
-      }
-   }
-
    var.key = "puae_immediate_blits";
    var.value = NULL;
 
@@ -867,7 +709,7 @@ static void update_variables(void)
 
 	changed_prefs.gfx_framerate=1; // no frameskip
 
-   var.key = "puae_gfx_colors";
+   /*var.key = "puae_gfx_colors";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -879,7 +721,7 @@ static void update_variables(void)
          else if (strcmp(var.value, "24bit") == 0) pix_bytes=4;
          pix_bytes_initialized = true;
       }
-   }
+   }*/
 
    var.key = "puae_gfx_center_horizontal";
    var.value = NULL;
@@ -897,64 +739,6 @@ static void update_variables(void)
          else if (strcmp(var.value, "simple") == 0) val=1;
          else if (strcmp(var.value, "smart") == 0) val=2;
          changed_prefs.gfx_xcenter=val;
-      }
-   }
-
-   var.key = "puae_gfx_center_vertical";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "gfx_center_vertical=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (firstpass != 1)
-      {
-         int val;
-         if (strcmp(var.value, "none") == 0) val=0;
-         else if (strcmp(var.value, "simple") == 0) val=1;
-         else if (strcmp(var.value, "smart") == 0) val=2;
-         changed_prefs.gfx_ycenter=val;
-      }
-   }
-
-   var.key = "puae_zoom_mode";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "none") == 0) zoom_mode_id=0;
-      else if (strcmp(var.value, "minimum") == 0) zoom_mode_id=1;
-      else if (strcmp(var.value, "smaller") == 0) zoom_mode_id=2;
-      else if (strcmp(var.value, "small") == 0) zoom_mode_id=3;
-      else if (strcmp(var.value, "medium") == 0) zoom_mode_id=4;
-      else if (strcmp(var.value, "large") == 0) zoom_mode_id=5;
-      else if (strcmp(var.value, "larger") == 0) zoom_mode_id=6;
-      else if (strcmp(var.value, "maximum") == 0) zoom_mode_id=7;
-      else if (strcmp(var.value, "auto") == 0) zoom_mode_id=8;
-   }
-
-   var.key = "puae_vertical_pos";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "auto") == 0)
-      {
-         opt_vertical_offset_auto = true;
-         thisframe_y_adjust = minfirstline;
-      }
-      else
-      {
-         opt_vertical_offset_auto = false;
-         int new_vertical_offset = atoi(var.value);
-         if (new_vertical_offset >= -20 && new_vertical_offset <= 50)
-         {
-            /* This offset is used whenever minfirstline is reset on gfx mode changes in the init_hz() function */
-            opt_vertical_offset = new_vertical_offset;
-            thisframe_y_adjust = minfirstline + opt_vertical_offset;
-         }
       }
    }
 
@@ -994,24 +778,12 @@ static void update_variables(void)
 			strcat(uae_config, "gfx_lores=false\n");
 			strcat(uae_config, "gfx_linemode=double\n");
 			break;
-		case PUAE_VIDEO_PAL_LO:
-			defaultw = 360;
-			defaulth = 284;
-			strcat(uae_config, "gfx_lores=true\n");
-			strcat(uae_config, "gfx_linemode=none\n");
-			break;
 
 		case PUAE_VIDEO_NTSC_HI:
 			defaultw = 720;
 			defaulth = 480;
 			strcat(uae_config, "gfx_lores=false\n");
 			strcat(uae_config, "gfx_linemode=double\n");
-			break;
-		case PUAE_VIDEO_NTSC_LO:
-			defaultw = 360;
-			defaulth = 240;
-			strcat(uae_config, "gfx_lores=true\n");
-			strcat(uae_config, "gfx_linemode=none\n");
 			break;
    }
 
@@ -1359,7 +1131,7 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
 {
    request_update_av_info = false;
    float hz = currprefs.chipset_refreshrate;
-   fprintf(stderr, "[libretro-uae]: Trying to update AV geometry:%d timing:%d, to: ntsc:%d hz:%0.4f, from video_config:%d, video_aspect:%d\n", change_geometry, change_timing, isntsc, hz, video_config, video_config_aspect);
+   fprintf(stderr, "[libretro-uae]: Trying to update AV geometry:%d timing:%d, to: ntsc:%d hz:%0.4f, from video_config:%d, video_aspect:%d\n", change_geometry, change_timing, isntsc, hz, video_config, 0);
 
    /* Change PAL/NTSC with a twist, thanks to Dyna Blaster
 
@@ -1397,18 +1169,6 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
       video_config_geometry = video_config;
    }
 
-   /* Aspect ratio override always changes only temporary video config */
-   if (video_config_aspect == PUAE_VIDEO_NTSC)
-   {
-      video_config_geometry |= PUAE_VIDEO_NTSC;
-      video_config_geometry &= ~PUAE_VIDEO_PAL;
-   }
-   else if (video_config_aspect == PUAE_VIDEO_PAL)
-   {
-      video_config_geometry |= PUAE_VIDEO_PAL;
-      video_config_geometry &= ~PUAE_VIDEO_NTSC;
-   }
-
    /* Do nothing if timing has not changed, unless Hz switched without isntsc */
    if (video_config_old == video_config && change_timing)
    {
@@ -1436,18 +1196,10 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
          retrow = 720;
          retroh = 568;
          break;
-      case PUAE_VIDEO_PAL_LO:
-         retrow = 360;
-         retroh = 284;
-         break;
 
       case PUAE_VIDEO_NTSC_HI:
          retrow = 720;
          retroh = 480;
-         break;
-      case PUAE_VIDEO_NTSC_LO:
-         retrow = 360;
-         retroh = 240;
          break;
    }
 
@@ -1490,115 +1242,6 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
    if (change_geometry) {
       environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &new_av_info);
    }
-
-   /* Apply zoom mode if necessary */
-   zoomed_height = retroh;
-   switch (zoom_mode_id)
-   {
-      case 1:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 480 : 540;
-         else
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 240 : 270;
-         break;
-      case 2:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 474 : 524;
-         else
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 237 : 262;
-         break;
-      case 3:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 470 : 512;
-         else
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 235 : 256;
-         break;
-      case 4:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 460 : 480;
-         else
-            zoomed_height = (video_config_geometry & PUAE_VIDEO_NTSC) ? 230 : 240;
-         break;
-      case 5:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = 448;
-         else
-            zoomed_height = 224;
-         break;
-      case 6:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = 432;
-         else
-            zoomed_height = 216;
-         break;
-      case 7:
-         if (video_config & PUAE_VIDEO_HIRES)
-            zoomed_height = 400;
-         else
-            zoomed_height = 200;
-         break;
-      case 8:
-         if (thisframe_first_drawn_line != thisframe_last_drawn_line
-         && thisframe_first_drawn_line > 0 && thisframe_last_drawn_line > 0
-         )
-         {
-            zoomed_height = thisframe_last_drawn_line - thisframe_first_drawn_line + 1;
-            zoomed_height = (video_config & PUAE_VIDEO_HIRES) ? zoomed_height * 2 : zoomed_height;
-         }
-
-         if (video_config & PUAE_VIDEO_HIRES)
-            if (zoomed_height < 400)
-               zoomed_height = 400;
-         else
-            if (zoomed_height < 200)
-               zoomed_height = 200;
-         break;
-      default:
-         break;
-   }
-
-   if (zoomed_height > retroh)
-      zoomed_height = retroh;
-
-   if (zoomed_height != retroh)
-   {
-      new_av_info.geometry.base_height = zoomed_height;
-      if (video_config_geometry & PUAE_VIDEO_NTSC)
-         new_av_info.geometry.aspect_ratio=(float)retrow/(float)zoomed_height * 44.0/52.0;
-      else
-         new_av_info.geometry.aspect_ratio=(float)retrow/(float)zoomed_height;
-      environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &new_av_info);
-   }
-
-   /* If zoom mode should be centered automagically */
-   if (opt_vertical_offset_auto && zoom_mode_id != 0 && firstpass != 1)
-   {
-      int zoomed_height_normal = (video_config & PUAE_VIDEO_HIRES) ? zoomed_height / 2 : zoomed_height;
-      int thisframe_y_adjust_new = minfirstline;
-
-      /* Need proper values for calculations */
-      if (thisframe_first_drawn_line != thisframe_last_drawn_line
-      && thisframe_first_drawn_line > 0 && thisframe_last_drawn_line > 0
-      && thisframe_first_drawn_line < 100 && thisframe_last_drawn_line > 200
-      )
-         thisframe_y_adjust_new = (thisframe_last_drawn_line - thisframe_first_drawn_line - zoomed_height_normal) / 2 + thisframe_first_drawn_line; // Smart
-         //thisframe_y_adjust_new = thisframe_first_drawn_line + ((thisframe_last_drawn_line - thisframe_first_drawn_line) - zoomed_height_normal) / 2; // Simple
-
-      /* Sensible limits */
-      thisframe_y_adjust_new = (thisframe_y_adjust_new < 0) ? 0 : thisframe_y_adjust_new;
-      thisframe_y_adjust_new = (thisframe_y_adjust_new > (minfirstline + 50)) ? (minfirstline + 50) : thisframe_y_adjust_new;
-
-      /* Change value only if altered */
-      if (thisframe_y_adjust != thisframe_y_adjust_new)
-         thisframe_y_adjust = thisframe_y_adjust_new;
-
-      //printf("FIRSTDRAWN:%3d LASTDRAWN:%3d yadjust:%2d old:%2d zoomed_height:%d\n", thisframe_first_drawn_line, thisframe_last_drawn_line, thisframe_y_adjust, thisframe_y_adjust_old, zoomed_height);
-
-      /* Remember the previous value */
-      thisframe_y_adjust_old = thisframe_y_adjust;
-   }
-   else
-      thisframe_y_adjust = minfirstline + opt_vertical_offset;
 
    /* No need to check changed gfx at startup */
    if (firstpass != 1) {
@@ -1681,39 +1324,6 @@ void retro_run(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       update_variables();
 
-   // Automatic vertical offset
-   if (opt_vertical_offset_auto && zoom_mode_id != 0)
-   {
-      if (thisframe_first_drawn_line != thisframe_first_drawn_line_old || thisframe_last_drawn_line != thisframe_last_drawn_line_old)
-      {
-         thisframe_first_drawn_line_old = thisframe_first_drawn_line;
-         thisframe_last_drawn_line_old = thisframe_last_drawn_line;
-         if (thisframe_first_drawn_line < 100 && thisframe_last_drawn_line > 200)
-            request_update_av_info = true;
-      }
-      // Timer required for unserialize recovery
-      else if (thisframe_first_drawn_line == thisframe_first_drawn_line_old)
-      {
-         if (thisframe_y_adjust_update_frame_timer > 0)
-         {
-            thisframe_y_adjust_update_frame_timer--;
-            if (thisframe_y_adjust_update_frame_timer == 0)
-               request_update_av_info = true;
-         }
-      }
-   }
-   else
-   {
-      // Vertical offset must not be set too early
-      if (thisframe_y_adjust_update_frame_timer > 0)
-      {
-         thisframe_y_adjust_update_frame_timer--;
-         if (thisframe_y_adjust_update_frame_timer == 0)
-            if (opt_vertical_offset != 0)
-               thisframe_y_adjust = minfirstline + opt_vertical_offset;
-      }
-   }
-
    // AV info change is requested
    if (request_update_av_info)
       retro_update_av_info(1, 0, 0);
@@ -1727,7 +1337,7 @@ void retro_run(void)
    retro_poll_event();
 
 sortie:
-   video_cb(bmp, retrow, zoomed_height, retrow << (pix_bytes / 2));
+   video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
    co_switch(emuThread);
 }
 
@@ -2093,7 +1703,6 @@ bool retro_serialize(void *data_, size_t size)
 
 bool retro_unserialize(const void *data_, size_t size)
 {
-   thisframe_y_adjust_update_frame_timer = 3;
    if (firstpass != 1)
    {
       snprintf(savestate_fname, sizeof(savestate_fname), "%s%suae_tempsave.uss", retro_save_directory, DIR_SEP_STR);
