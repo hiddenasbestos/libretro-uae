@@ -40,22 +40,12 @@ void gettimeofday (struct timeval *tv, void *blah)
 unsigned short int bmp[1024*1024];
 unsigned short int savebmp[1024*1024];
 
-// Mouse speed flags
-#define MOUSE_SPEED_SLOWER 1
-#define MOUSE_SPEED_FASTER 2
-// Mouse speed multipliers
-#define MOUSE_SPEED_SLOW 5
-#define MOUSE_SPEED_FAST 2
-
 int NPAGE=-1;
 int SHIFTON=-1,ALTON=-1;
 int MOUSEMODE=-1,SHOWKEY=-1,SHOWKEYPOS=-1,SHOWKEYTRANS=-1,STATUSON=-1,LEDON=-1;
 
 char RPATH[512];
 
-int analog_left[2];
-int analog_right[2];
-unsigned int mouse_speed[2]={0};
 int slowdown=0;
 extern int pix_bytes;
 extern bool fake_ntsc;
@@ -83,11 +73,6 @@ extern int zoom_mode_id;
 extern bool request_update_av_info;
 extern bool opt_enhanced_statusbar;
 extern int opt_statusbar_position;
-extern unsigned int opt_analogmouse;
-extern unsigned int opt_analogmouse_deadzone;
-extern float opt_analogmouse_speed;
-extern unsigned int opt_dpadmouse_speed;
-extern bool opt_multimouse;
 extern bool opt_keyrahkeypad;
 extern bool opt_keyboard_pass_through;
 
@@ -931,10 +916,6 @@ void update_input(int disable_physical_cursor_keys)
                }
                else if (mapper_keys[i] == -4) /* Mouse button middle */
                   retro_mouse_button(j, 2, 1);
-               else if (mapper_keys[i] == -5) /* Mouse speed slower */
-                  mouse_speed[j] |= MOUSE_SPEED_SLOWER;
-               else if (mapper_keys[i] == -6) /* Mouse speed faster */
-                  mouse_speed[j] |= MOUSE_SPEED_FASTER;
                else /* Keyboard keys */
                   retro_key_down(keyboard_translation[mapper_keys[i]]);
             }
@@ -968,10 +949,6 @@ void update_input(int disable_physical_cursor_keys)
                }
                else if (mapper_keys[i] == -4) /* Mouse button middle */
                   retro_mouse_button(j, 2, 0);
-               else if (mapper_keys[i] == -5) /* Mouse speed slower */
-                  mouse_speed[j] &= ~MOUSE_SPEED_SLOWER;
-               else if (mapper_keys[i] == -6) /* Mouse speed faster */
-                  mouse_speed[j] &= ~MOUSE_SPEED_FASTER;
                else /* Keyboard keys */
                   retro_key_up(keyboard_translation[mapper_keys[i]]);
             }
@@ -1151,7 +1128,6 @@ void retro_poll_event()
    /* keyup allowing most likely not needed on actual keyboard presses even though they get stuck also */
    {
       static float mouse_multiplier=1;
-      static int dpadmouse_speed;
       static int uae_mouse_x[2],uae_mouse_y[2];
       static int uae_mouse_l[2]={0},uae_mouse_r[2]={0},uae_mouse_m[2]={0};
       static int mouse_lmb[2]={0},mouse_rmb[2]={0},mouse_mmb[2]={0};
@@ -1227,118 +1203,6 @@ void retro_poll_event()
          uae_mouse_m[0] = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
       }
 
-      // Second mouse buttons only when enabled
-      if(opt_multimouse)
-          if (!uae_mouse_l[1] && !uae_mouse_r[1])
-          {
-             uae_mouse_l[1] = input_state_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-             uae_mouse_r[1] = input_state_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-             uae_mouse_m[1] = input_state_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE);
-          }
-
-      // Joypad movement only with digital mouse mode and virtual keyboard hidden
-      if (MOUSEMODE==1 && SHOWKEY==-1 && (uae_devices[0] == RETRO_DEVICE_JOYPAD || uae_devices[1] == RETRO_DEVICE_JOYPAD))
-      {
-         for (j = 0; j < 2; j++)
-         {
-            // Digital mouse speed modifiers
-            dpadmouse_speed = opt_dpadmouse_speed;
-            if (mouse_speed[j] & MOUSE_SPEED_FASTER)
-               dpadmouse_speed = dpadmouse_speed + 4;
-            if (mouse_speed[j] & MOUSE_SPEED_SLOWER)
-               dpadmouse_speed = dpadmouse_speed - 4;
-
-            // Digital mouse speed limits
-            if (dpadmouse_speed<4) dpadmouse_speed = 2;
-            if (dpadmouse_speed>10) dpadmouse_speed = 12;
-
-            if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-               uae_mouse_x[j] += dpadmouse_speed;
-            if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-               uae_mouse_x[j] -= dpadmouse_speed;
-            if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-               uae_mouse_y[j] += dpadmouse_speed;
-            if (input_state_cb(j, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-               uae_mouse_y[j] -= dpadmouse_speed;
-         }
-      }
-
-      // Left analog movement
-      if (opt_analogmouse == 1 || opt_analogmouse == 3)
-         for (j = 0; j < 2; j++)
-         {
-            // No keymappings and mousing at the same time
-            if (!uae_mouse_x[j] && !uae_mouse_y[j] && (!mapper_keys[16] && !mapper_keys[17] && !mapper_keys[18] && !mapper_keys[19]))
-            {
-               analog_left[0] = (input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X));
-               analog_left[1] = (input_state_cb(j, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y));
-
-               // Analog stick speed modifiers
-               mouse_multiplier = 1;
-               if (mouse_speed[j] & MOUSE_SPEED_FASTER)
-                  mouse_multiplier = mouse_multiplier * MOUSE_SPEED_FAST;
-               if (mouse_speed[j] & MOUSE_SPEED_SLOWER)
-                  mouse_multiplier = mouse_multiplier / MOUSE_SPEED_SLOW;
-
-               if (abs(analog_left[0]) <= opt_analogmouse_deadzone * 32768 / 100)
-                  analog_left[0] = 0;
-               if (abs(analog_left[1]) <= opt_analogmouse_deadzone * 32768 / 100)
-                  analog_left[1] = 0;
-
-               if (abs(analog_left[0]) > 0)
-               {
-                  uae_mouse_x[j] = analog_left[0] * 10 * (opt_analogmouse_speed * opt_analogmouse_speed * 0.7) / (32768 / mouse_multiplier);
-                  if (uae_mouse_x[j] == 0)
-                     uae_mouse_x[j] = (analog_left[0] > 0) ? 1 : -1;
-               }
-
-               if (abs(analog_left[1]) > 0)
-               {
-                  uae_mouse_y[j] = analog_left[1] * 10 * (opt_analogmouse_speed * opt_analogmouse_speed * 0.7) / (32768 / mouse_multiplier);
-                  if (uae_mouse_y[j] == 0)
-                     uae_mouse_y[j] = (analog_left[1] > 0) ? 1 : -1;
-               }
-            }
-         }
-
-      // Right analog movement
-      if (opt_analogmouse == 2 || opt_analogmouse == 3)
-         for (j = 0; j < 2; j++)
-         {
-            // No keymappings and mousing at the same time
-            if (!uae_mouse_x[j] && !uae_mouse_y[j] && (!mapper_keys[20] && !mapper_keys[21] && !mapper_keys[22] && !mapper_keys[23]))
-            {
-               analog_right[0] = (input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X));
-               analog_right[1] = (input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y));
-
-               // Analog stick speed modifiers
-               mouse_multiplier = 1;
-               if (mouse_speed[j] & MOUSE_SPEED_FASTER)
-                  mouse_multiplier = mouse_multiplier * MOUSE_SPEED_FAST;
-               if (mouse_speed[j] & MOUSE_SPEED_SLOWER)
-                  mouse_multiplier = mouse_multiplier / MOUSE_SPEED_SLOW;
-
-               if (abs(analog_right[0]) <= opt_analogmouse_deadzone * 32768 / 100)
-                  analog_right[0] = 0;
-               if (abs(analog_right[1]) <= opt_analogmouse_deadzone * 32768 / 100)
-                  analog_right[1] = 0;
-
-               if (abs(analog_right[0]) > 0)
-               {
-                  uae_mouse_x[j] = analog_right[0] * 10 * (opt_analogmouse_speed * opt_analogmouse_speed * 0.7) / (32768 / mouse_multiplier);
-                  if (uae_mouse_x[j] == 0)
-                     uae_mouse_x[j] = (analog_right[0] > 0) ? 1 : -1;
-               }
-
-               if (abs(analog_right[1]) > 0)
-               {
-                  uae_mouse_y[j] = analog_right[1] * 10 * (opt_analogmouse_speed * opt_analogmouse_speed * 0.7) / (32768 / mouse_multiplier);
-                  if (uae_mouse_y[j] == 0)
-                     uae_mouse_y[j] = (analog_right[1] > 0) ? 1 : -1;
-               }
-            }
-         }
-
       // Real mouse movement
       if (!uae_mouse_x[0] && !uae_mouse_y[0])
       {
@@ -1351,20 +1215,6 @@ void retro_poll_event()
             uae_mouse_y[0] = mouse_y[0];
          }
       }
-
-      // Second mouse movement only when enabled
-      if(opt_multimouse)
-          if (!uae_mouse_x[1] && !uae_mouse_y[1])
-          {
-             mouse_x[1] = input_state_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
-             mouse_y[1] = input_state_cb(1, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
-
-             if (mouse_x[1] || mouse_y[1])
-             {
-                uae_mouse_x[1] = mouse_x[1];
-                uae_mouse_y[1] = mouse_y[1];
-             }
-          }
 
       // Ports 1 & 2
       for (j = 0; j < 2; j++)

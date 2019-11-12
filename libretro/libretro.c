@@ -43,11 +43,6 @@ int opt_statusbar_position_offset = 0;
 int opt_statusbar_position_offset_lores = 0;
 bool opt_keyrahkeypad = false;
 bool opt_keyboard_pass_through = false;
-bool opt_multimouse = false;
-unsigned int opt_dpadmouse_speed = 4;
-unsigned int opt_analogmouse = 0;
-unsigned int opt_analogmouse_deadzone = 15;
-float opt_analogmouse_speed = 1.0;
 int pix_bytes = 2;
 static bool pix_bytes_initialized = false;
 bool fake_ntsc = false;
@@ -577,109 +572,6 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "enabled"
-      },
-      {
-         "puae_analogmouse",
-         "Analog Stick Mouse",
-         "",
-         {
-            { "disabled", NULL },
-            { "left", "Left analog" },
-            { "right", "Right analog" },
-            { "both", "Both analogs" },
-            { NULL, NULL },
-         },
-         "right"
-      },
-      {
-         "puae_analogmouse_deadzone",
-         "Analog Stick Mouse Deadzone",
-         "",
-         {
-            { "0", "0\%" },
-            { "5", "5\%" },
-            { "10", "10\%" },
-            { "15", "15\%" },
-            { "20", "20\%" },
-            { "25", "25\%" },
-            { "30", "30\%" },
-            { "35", "35\%" },
-            { NULL, NULL },
-         },
-         "15"
-      },
-      {
-         "puae_analogmouse_speed",
-         "Analog Stick Mouse Speed",
-         "",
-         {
-            { "0.5", "50\%" },
-            { "0.6", "60\%" },
-            { "0.7", "70\%" },
-            { "0.8", "80\%" },
-            { "0.9", "90\%" },
-            { "1.0", "100\%" },
-            { "1.1", "110\%" },
-            { "1.2", "120\%" },
-            { "1.3", "130\%" },
-            { "1.4", "140\%" },
-            { "1.5", "150\%" },
-            { NULL, NULL },
-         },
-         "1.0"
-      },
-      {
-         "puae_dpadmouse_speed",
-         "D-Pad Mouse Speed",
-         "",
-         {
-            { "4", "Slow" },
-            { "6", "Medium" },
-            { "8", "Fast" },
-            { "10", "Very fast" },
-            { NULL, NULL },
-         },
-         "6"
-      },
-      {
-         "puae_mouse_speed",
-         "Mouse Speed",
-         "Affects mouse speed globally.",
-         {
-            { "10", "10\%" },
-            { "20", "20\%" },
-            { "30", "30\%" },
-            { "40", "40\%" },
-            { "50", "50\%" },
-            { "60", "60\%" },
-            { "70", "70\%" },
-            { "80", "80\%" },
-            { "90", "90\%" },
-            { "100", "100\%" },
-            { "110", "110\%" },
-            { "120", "120\%" },
-            { "130", "130\%" },
-            { "140", "140\%" },
-            { "150", "150\%" },
-            { "160", "160\%" },
-            { "170", "170\%" },
-            { "180", "180\%" },
-            { "190", "190\%" },
-            { "200", "200\%" },
-            { NULL, NULL },
-         },
-         "100"
-      },
-      {
-         "puae_multimouse",
-         "Multiple Mouse",
-         "Requirements: raw/udev input driver and proper mouse index in RA input configs.\nOnly for real mice, not RetroPad emulated.",
-         {
-            { "disabled", NULL },
-            { "enabled", NULL },
-            { NULL, NULL },
-         },
-         "disabled"
       },
       {
          "puae_keyrah_keypad_mappings",
@@ -1529,50 +1421,6 @@ static void update_variables(void)
         opt_use_whdload_hdf = true;
       if (strcmp(var.value, "disabled") == 0)
         opt_use_whdload_hdf = false;
-   }
-
-   var.key = "puae_analogmouse";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0) opt_analogmouse=0;
-      else if (strcmp(var.value, "left") == 0) opt_analogmouse=1;
-      else if (strcmp(var.value, "right") == 0) opt_analogmouse=2;
-      else if (strcmp(var.value, "both") == 0) opt_analogmouse=3;
-   }
-
-   var.key = "puae_analogmouse_deadzone";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      opt_analogmouse_deadzone = atoi(var.value);
-   }
-
-   var.key = "puae_analogmouse_speed";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      opt_analogmouse_speed = atof(var.value);
-   }
-
-   var.key = "puae_dpadmouse_speed";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      opt_dpadmouse_speed = atoi(var.value);
-   }
-
-   var.key = "puae_multimouse";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0) opt_multimouse=false;
-      else if (strcmp(var.value, "enabled") == 0) opt_multimouse=true;
    }
 
    var.key = "puae_keyrah_keypad_mappings";
