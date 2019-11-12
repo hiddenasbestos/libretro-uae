@@ -245,88 +245,6 @@ void retro_set_environment(retro_environment_t cb)
          },
          "exact"
       },*/
-      {
-         "puae_sound_output",
-         "Sound Output",
-         "",
-         {
-            { "exact", "Exact" },
-            { "none", "None" },
-            { "interrupts", "Interrupts" },
-            { "normal", "Normal" },
-            { NULL, NULL },
-         },
-         "exact"
-      },
-      {
-         "puae_sound_interpol",
-         "Sound Interpolation",
-         "",
-         {
-            { "anti", "Anti" },
-            { "none", "None" },
-            { "sinc", "Sinc" },
-            { "rh", "RH" },
-            { "crux", "Crux" },
-            { NULL, NULL },
-         },
-         "anti"
-      },
-      {
-         "puae_sound_filter",
-         "Sound Filter",
-         "",
-         {
-            { "emulated", "Emulated" },
-            { "off", "Always off" },
-            { "on", "Always on" },
-            { NULL, NULL },
-         },
-         "emulated"
-      },
-      {
-         "puae_sound_filter_type",
-         "Sound Filter Type",
-         "",
-         {
-            { "standard", "A500" },
-            { "enhanced", "A1200" },
-            { NULL, NULL },
-         },
-         "standard",
-      },
-      {
-         "puae_floppy_sound",
-         "Floppy Sound Emulation",
-         "",
-         {
-            { "100", "disabled" },
-            { "90", "10\% volume" },
-            { "80", "20\% volume" },
-            { "70", "30\% volume" },
-            { "60", "40\% volume" },
-            { "50", "50\% volume" },
-            { "40", "60\% volume" },
-            { "30", "70\% volume" },
-            { "20", "80\% volume" },
-            { "10", "90\% volume" },
-            { "0", "100\% volume" },
-            { NULL, NULL },
-         },
-         "100"
-      },
-      {
-         "puae_floppy_sound_type",
-         "Floppy Sound Emulation Type",
-         "External file location is 'system/uae_data/'.",
-         {
-            { "internal", "Internal" },
-            { "A500", "External: A500" },
-            { "LOUD", "External: LOUD" },
-            { NULL, NULL },
-         },
-         "internal"
-      },
       /*{
          "puae_use_whdload",
          "Use WHDLoad.hdf",
@@ -358,11 +276,11 @@ void retro_set_environment(retro_environment_t cb)
 			variables[i].key = core_options[i].key;
 			strcpy(buf[i], core_options[i].desc);
 			strcat(buf[i], "; ");
-			strcat(buf[i], core_options[i].default_value);
+//			strcat(buf[i], core_options[i].default_value);
 			int j = 0;
 			while (core_options[i].values[j].value && j < RETRO_NUM_CORE_OPTION_VALUES_MAX)
 			{
-				//if ( j > 0 )
+				if ( j > 0 )
 					strcat(buf[i], "|");
 				strcat(buf[i], core_options[i].values[j].value);
 				++j;
@@ -478,132 +396,17 @@ static void update_variables(void)
 	 }
    }
 */
-   var.key = "puae_sound_output";
-   var.value = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "sound_output=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (strcmp(var.value, "none") == 0) changed_prefs.produce_sound=0;
-      else if (strcmp(var.value, "interrupts") == 0) changed_prefs.produce_sound=1;
-      else if (strcmp(var.value, "normal") == 0) changed_prefs.produce_sound=2;
-      else if (strcmp(var.value, "exact") == 0) changed_prefs.produce_sound=3;
-   }
-
-   var.key = "puae_sound_interpol";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "sound_interpol=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (strcmp(var.value, "none") == 0) changed_prefs.sound_interpol=0;
-      else if (strcmp(var.value, "anti") == 0) changed_prefs.sound_interpol=1;
-      else if (strcmp(var.value, "sinc") == 0) changed_prefs.sound_interpol=2;
-      else if (strcmp(var.value, "rh") == 0) changed_prefs.sound_interpol=3;
-      else if (strcmp(var.value, "crux") == 0) changed_prefs.sound_interpol=4;
-   }
-
-   var.key = "puae_sound_filter";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "sound_filter=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (strcmp(var.value, "emulated") == 0) changed_prefs.sound_filter=FILTER_SOUND_EMUL;
-      else if (strcmp(var.value, "off") == 0) changed_prefs.sound_filter=FILTER_SOUND_OFF;
-      else if (strcmp(var.value, "on") == 0) changed_prefs.sound_filter=FILTER_SOUND_ON;
-   }
-
-   var.key = "puae_sound_filter_type";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "sound_filter_type=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (strcmp(var.value, "standard") == 0) changed_prefs.sound_filter_type=FILTER_SOUND_TYPE_A500;
-      else if (strcmp(var.value, "enhanced") == 0) changed_prefs.sound_filter_type=FILTER_SOUND_TYPE_A1200;
-   }
-
-   var.key = "puae_floppy_sound";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      /* Sound is enabled by default if files are found, so this needs to be set always */
-      /* 100 is mute, 0 is max */
-      strcat(uae_config, "floppy_volume=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      /* Setting volume in realtime will crash on first pass */
-      if (firstpass != 1)
-         changed_prefs.dfxclickvolume=atoi(var.value);
-   }
-
-   var.key = "puae_floppy_sound_type";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (firstpass != 1)
-      {
-         if (strcmp(var.value, "internal") == 0)
-         {
-            for (int i = 0; i < 4; i++)
-               changed_prefs.floppyslots[i].dfxclick=1;
-         }
-         else
-         {
-            for (int i = 0; i < 4; i++)
-            {
-               changed_prefs.floppyslots[i].dfxclick=-1;
-               _tcscpy(changed_prefs.floppyslots[i].dfxclickexternal, var.value);
-            }
-         }
-      }
-      else
-      {
-         if (strcmp(var.value, "internal") == 0)
-         {
-            strcat(uae_config, "floppy0sound=1\n");
-            strcat(uae_config, "floppy1sound=1\n");
-            strcat(uae_config, "floppy2sound=1\n");
-            strcat(uae_config, "floppy3sound=1\n");
-         }
-         else
-         {
-            strcat(uae_config, "floppy0sound=-1\n");
-            strcat(uae_config, "floppy1sound=-1\n");
-            strcat(uae_config, "floppy2sound=-1\n");
-            strcat(uae_config, "floppy3sound=-1\n");
-
-            strcat(uae_config, "floppy0soundext=");
-            strcat(uae_config, var.value);
-            strcat(uae_config, "\n");
-            strcat(uae_config, "floppy1soundext=");
-            strcat(uae_config, var.value);
-            strcat(uae_config, "\n");
-            strcat(uae_config, "floppy2soundext=");
-            strcat(uae_config, var.value);
-            strcat(uae_config, "\n");
-            strcat(uae_config, "floppy3soundext=");
-            strcat(uae_config, var.value);
-            strcat(uae_config, "\n");
-         }
-      }
-   }
+	strcat(uae_config, "sound_output=3\n"); // exact
+	strcat(uae_config, "sound_filter=1\n"); // FILTER_SOUND_EMUL
+	strcat(uae_config, "sound_filter_type=0\n"); // A500
+//	strcat(uae_config, "sound_filter_type=1\n"); // A1200
+	strcat(uae_config, "sound_interpol=0\n"); // 'none' (see changed_prefs.sound_interpol for others)
+	strcat(uae_config, "floppy_volume=100\n"); /* 100 is mute, 0 is max */
+	strcat(uae_config, "floppy0sound=1\n");
+	strcat(uae_config, "floppy1sound=1\n");
+	strcat(uae_config, "floppy2sound=1\n");
+	strcat(uae_config, "floppy3sound=1\n");
 
    var.key = "puae_collision_level";
    var.value = NULL;
