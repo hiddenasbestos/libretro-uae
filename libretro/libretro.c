@@ -206,7 +206,7 @@ void retro_set_environment(retro_environment_t cb)
 
    static struct retro_core_option_definition core_options[] =
    {
-      {
+      /*{
          "puae_model",
          "Model",
          "Restart required.",
@@ -220,7 +220,7 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "A500"
-      },
+      },*/
       {
          "puae_video_hires",
          "High Resolution",
@@ -607,6 +607,12 @@ static void update_variables(void)
 
    struct retro_variable var = {0};
 
+#if FORCE_MACHINE == 500
+	strcat(uae_machine, A500);
+	strcpy(uae_kickstart, A500_ROM);
+#endif // FORCE_MACHINE
+
+/*
    var.key = "puae_model";
    var.value = NULL;
 
@@ -643,7 +649,7 @@ static void update_variables(void)
          strcpy(uae_kickstart, A1200_ROM);
       }
    }
-
+*/
    var.key = "puae_video_standard";
    var.value = NULL;
 
