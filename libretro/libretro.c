@@ -360,18 +360,6 @@ void retro_set_environment(retro_environment_t cb)
          "false"
       },
       {
-         "puae_gfx_framerate",
-         "Frameskip",
-         "Not compatible with 'Cycle-exact'.",
-         {
-            { "disabled", NULL },
-            { "1", NULL },
-            { "2", NULL },
-            { NULL, NULL },
-         },
-         "disabled"
-      },
-      {
          "puae_cpu_compatibility",
          "CPU Compatibility",
          "",
@@ -977,26 +965,7 @@ static void update_variables(void)
       }
    }
 
-   var.key = "puae_gfx_framerate";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      int val;
-      if (strcmp(var.value, "disabled") == 0) val=1;
-      else if (strcmp(var.value, "1") == 0) val=2;
-      else if (strcmp(var.value, "2") == 0) val=3;
-      changed_prefs.gfx_framerate=val;
-
-      if (val>1)
-      {
-         char valbuf[50];
-         snprintf(valbuf, 50, "%d", val);
-         strcat(uae_config, "gfx_framerate=");
-         strcat(uae_config, valbuf);
-         strcat(uae_config, "\n");
-      }
-   }
+	changed_prefs.gfx_framerate=1; // no frameskip
 
    var.key = "puae_gfx_colors";
    var.value = NULL;
