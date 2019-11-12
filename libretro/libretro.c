@@ -233,18 +233,6 @@ void retro_set_environment(retro_environment_t cb)
          },
          "playfields"
       },
-      {
-         "puae_immediate_blits",
-         "Immediate/Waiting Blits",
-         "'Immediate Blitter' ignored with 'Cycle-exact'.",
-         {
-            { "false", "disabled" },
-            { "immediate", "Immediate Blitter" },
-            { "waiting", "Wait for Blitter" },
-            { NULL, NULL },
-         },
-         "false"
-      },
       /*{
          "puae_cpu_compatibility",
          "CPU Compatibility",
@@ -262,10 +250,10 @@ void retro_set_environment(retro_environment_t cb)
          "Sound Output",
          "",
          {
+            { "exact", "Exact" },
             { "none", "None" },
             { "interrupts", "Interrupts" },
             { "normal", "Normal" },
-            { "exact", "Exact" },
             { NULL, NULL },
          },
          "exact"
@@ -275,8 +263,8 @@ void retro_set_environment(retro_environment_t cb)
          "Sound Interpolation",
          "",
          {
-            { "none", "None" },
             { "anti", "Anti" },
+            { "none", "None" },
             { "sinc", "Sinc" },
             { "rh", "RH" },
             { "crux", "Crux" },
@@ -613,47 +601,6 @@ static void update_variables(void)
             strcat(uae_config, "floppy3soundext=");
             strcat(uae_config, var.value);
             strcat(uae_config, "\n");
-         }
-      }
-   }
-
-   var.key = "puae_immediate_blits";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "false") == 0)
-      {
-         strcat(uae_config, "immediate_blits=false\n");
-         strcat(uae_config, "waiting_blits=false\n");
-      }
-      else if (strcmp(var.value, "immediate") == 0)
-      {
-         strcat(uae_config, "immediate_blits=true\n");
-         strcat(uae_config, "waiting_blits=disabled\n");
-      }
-      else if (strcmp(var.value, "waiting") == 0)
-      {
-         strcat(uae_config, "immediate_blits=false\n");
-         strcat(uae_config, "waiting_blits=automatic\n");
-      }
-
-      if (firstpass != 1)
-      {
-         if (strcmp(var.value, "false") == 0)
-         {
-            changed_prefs.immediate_blits=0;
-            changed_prefs.waiting_blits=0;
-         }
-         else if (strcmp(var.value, "immediate") == 0)
-         {
-            changed_prefs.immediate_blits=1;
-            changed_prefs.waiting_blits=0;
-         }
-         else if (strcmp(var.value, "waiting") == 0)
-         {
-            changed_prefs.immediate_blits=0;
-            changed_prefs.waiting_blits=1;
          }
       }
    }
