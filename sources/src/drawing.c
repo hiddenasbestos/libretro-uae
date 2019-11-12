@@ -1017,7 +1017,7 @@ STATIC_INLINE uae_u8 render_sprites (int pos, int dualpf, uae_u8 apixel, int aga
 		pairs 01 and 23 cleared, and pairs 45 and 67 set, so OFFS will
 		have a value of 4.
 		2 * OFFS is the bit number in V of the sprite pair, and it also
-		happens to be the color offset for that pair. 
+		happens to be the color offset for that pair.
 		*/
 		int offs;
 		if (v1 == 0)
@@ -1089,7 +1089,7 @@ STATIC_INLINE uae_u32 shsprite (int dpix, uae_u32 spix_val, uae_u32 v, int spr)
 	sprcol = render_sprites (dpix, 0, spix_val, 0);
 	if (!sprcol)
 		return v;
-	/* good enough for now.. */ 
+	/* good enough for now.. */
 	scol = colors_for_drawing.color_regs_ecs[sprcol] & 0xccc;
 	scol |= scol >> 2;
 	return xcolors[scol];
@@ -2029,7 +2029,7 @@ static void pfield_doline_n3 (uae_u32 *pixels, int wordcount, int lineno LINEDAT
    real_bplpt[0] = DATA_POINTER (0);
    real_bplpt[1] = DATA_POINTER (1);
    real_bplpt[2] = DATA_POINTER (2);
-   
+
    while (wordcount-- > 0) {
       uae_u32 b0,b1,b2,b3,b4,b5,b6,b7;
       b5 = GETLONG ((uae_u32 *)real_bplpt[2]); real_bplpt[2] += 4;
@@ -2191,7 +2191,7 @@ static void pfield_doline_n6 (uae_u32 *pixels, int wordcount, int lineno LINEDAT
    real_bplpt[3] = DATA_POINTER (3);
    real_bplpt[4] = DATA_POINTER (4);
    real_bplpt[5] = DATA_POINTER (5);
-   
+
    while (wordcount-- > 0) {
       uae_u32 b0,b1,b2,b3,b4,b5,b6,b7;
       b2 = GETLONG ((uae_u32 *)real_bplpt[5]); real_bplpt[5] += 4;
@@ -2413,7 +2413,7 @@ void init_row_map (void)
 	}
 	if (!row_map)
 		row_map = xmalloc (uae_u8*, MAX_UAE_HEIGHT + 1);
-	
+
 	if (oldbufmem && oldbufmem == gfxvidinfo.bufmem &&
 		oldheight == gfxvidinfo.height_allocated &&
 		oldpitch == gfxvidinfo.rowbytes)
@@ -3223,7 +3223,7 @@ static void draw_status_line (int line, int statusy)
 	if (xlinebuffer == 0)
 		xlinebuffer = row_map[line];
 	buf = xlinebuffer;
-	draw_status_line_single (buf, bpp, statusy, gfxvidinfo.outwidth, xredcolors, xgreencolors, xbluecolors, NULL);
+//DWD	draw_status_line_single (buf, bpp, statusy, gfxvidinfo.outwidth, xredcolors, xgreencolors, xbluecolors, NULL);
 }
 
 static void draw_debug_status_line (int line)
@@ -3554,7 +3554,7 @@ bool vsync_handle_check (void)
 		notice_new_xcolors ();
 	}
 	check_prefs_changed_audio ();
-#ifdef SCSI	
+#ifdef SCSI
 	check_prefs_changed_cd ();
 #endif
 	check_prefs_changed_custom ();

@@ -36,11 +36,6 @@ int retroh = 0;
 char key_state[512];
 char key_state2[512];
 bool opt_use_whdload_hdf = true;
-bool opt_enhanced_statusbar = true;
-int opt_statusbar_position = 0;
-int opt_statusbar_position_old = 0;
-int opt_statusbar_position_offset = 0;
-int opt_statusbar_position_offset_lores = 0;
 int pix_bytes = 2;
 static bool pix_bytes_initialized = false;
 bool fake_ntsc = false;
@@ -56,9 +51,7 @@ extern uae_u32 natmem_size;
 extern unsigned short int bmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
 extern unsigned short int savebmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
 extern int SHIFTON;
-extern int STATUSON;
 extern char RPATH[512];
-extern void Print_Status(void);
 static int firstpass = 1;
 extern int prefs_changed;
 int opt_vertical_offset = 0;
@@ -379,19 +372,6 @@ void retro_set_environment(retro_environment_t cb)
          "disabled"
       },
       {
-         "puae_statusbar",
-         "Statusbar Position & Mode",
-         "",
-         {
-            { "bottom", "Bottom Full" },
-            { "bottom_basic", "Bottom Basic" },
-            { "top", "Top Full" },
-            { "top_basic", "Top Basic" },
-            { NULL, NULL },
-         },
-         "bottom"
-      },
-      {
          "puae_cpu_compatibility",
          "CPU Compatibility",
          "",
@@ -705,54 +685,6 @@ static void update_variables(void)
          video_config |= PUAE_VIDEO_HIRES;
       else
          video_config &= ~PUAE_VIDEO_HIRES;
-   }
-
-   var.key = "puae_statusbar";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "top") == 0)
-      {
-         opt_statusbar_position = -1;
-         opt_enhanced_statusbar = true;
-      }
-      else if (strcmp(var.value, "top_basic") == 0)
-      {
-         opt_statusbar_position = -1;
-         opt_enhanced_statusbar = false;
-      }
-      else if (strcmp(var.value, "bottom") == 0)
-      {
-         opt_statusbar_position = 0;
-         opt_enhanced_statusbar = true;
-      }
-      else if (strcmp(var.value, "bottom_basic") == 0)
-      {
-         opt_statusbar_position = 0;
-         opt_enhanced_statusbar = false;
-      }
-
-      /* Exceptions for lo-res and enhanced statusbar */
-      if (video_config & PUAE_VIDEO_HIRES)
-         ;
-      else
-         if (opt_enhanced_statusbar)
-         {
-            opt_statusbar_position_offset_lores = 10;
-            if (opt_statusbar_position < 0) // Top
-               opt_statusbar_position = -opt_statusbar_position_offset_lores;
-            else // Bottom
-               opt_statusbar_position = opt_statusbar_position_offset_lores;
-         }
-         else
-            opt_statusbar_position_offset_lores = 0;
-
-      /* Screen refresh required */
-      if (opt_statusbar_position_old != opt_statusbar_position || !opt_enhanced_statusbar)
-         Screen_SetFullUpdate();
-
-      opt_statusbar_position_old = opt_statusbar_position;
    }
 
    var.key = "puae_cpu_compatibility";
@@ -1688,25 +1620,6 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
 
    if (change_geometry) {
       environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &new_av_info);
-
-      /* Ensure statusbar stays visible at the bottom */
-      opt_statusbar_position_offset = 0;
-      opt_statusbar_position = opt_statusbar_position_old;
-      if (!change_timing)
-         if (retroh < defaulth)
-            if (opt_statusbar_position >= 0 && (defaulth - retroh + opt_statusbar_position_offset_lores) > opt_statusbar_position)
-               opt_statusbar_position = defaulth - retroh + opt_statusbar_position_offset_lores;
-
-      /* Aspect offset for zoom mode */
-      opt_statusbar_position_offset = opt_statusbar_position_old - opt_statusbar_position;
-
-      /* Lores exception offset bonus */
-      if (video_config & PUAE_VIDEO_HIRES)
-         ;
-      else
-         opt_statusbar_position_offset = opt_statusbar_position_offset - opt_statusbar_position_offset_lores;
-
-      //printf("statusbar:%d old:%d offset:%d, retroh:%d defaulth:%d\n", opt_statusbar_position, opt_statusbar_position_old, opt_statusbar_position_offset, retroh, defaulth);
    }
 
    /* Apply zoom mode if necessary */
@@ -1786,12 +1699,6 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
       else
          new_av_info.geometry.aspect_ratio=(float)retrow/(float)zoomed_height;
       environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &new_av_info);
-
-      /* Ensure statusbar stays visible at the bottom */
-      if (opt_statusbar_position >= 0 && (retroh - zoomed_height - opt_statusbar_position_offset) > opt_statusbar_position)
-         opt_statusbar_position = retroh - zoomed_height - opt_statusbar_position_offset;
-
-      //printf("ztatusbar:%d old:%d offset:%d, retroh:%d defaulth:%d\n", opt_statusbar_position, opt_statusbar_position_old, opt_statusbar_position_offset, retroh, defaulth);
    }
 
    /* If zoom mode should be centered automagically */
@@ -1949,7 +1856,6 @@ void retro_run(void)
    }
 
    retro_poll_event();
-   if (STATUSON==1) Print_Status();
 
 sortie:
    video_cb(bmp, retrow, zoomed_height, retrow << (pix_bytes / 2));
