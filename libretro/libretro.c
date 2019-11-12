@@ -2213,11 +2213,13 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 void retro_get_system_info(struct retro_system_info *info)
 {
    memset(info, 0, sizeof(*info));
-   info->library_name     = "PUAE";
-   info->library_version  = "2.6.1" GIT_VERSION;
+#if FORCE_MACHINE==500
+   info->library_name     = "PUAE (A500)";
+#endif // FORCE_MACHINE
+   info->library_version  = "2.6.1 " GIT_VERSION;
    info->need_fullpath    = true;
    info->block_extract    = false;
-   info->valid_extensions = "adf|dms|fdi|ipf|zip|hdf|hdz|uae|m3u";
+   info->valid_extensions = "adf|m3u";
 }
 
 bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
