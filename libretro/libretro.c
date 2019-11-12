@@ -323,7 +323,7 @@ void retro_set_environment(retro_environment_t cb)
          },
          "auto"
       },
-      {
+      /*{
          "puae_gfx_colors",
          "Color Depth",
          "24-bit is slower and not available on all platforms. Restart required.",
@@ -333,7 +333,7 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "16bit"
-      },
+      },*/
       {
          "puae_collision_level",
          "Collision Level",
@@ -359,7 +359,7 @@ void retro_set_environment(retro_environment_t cb)
          },
          "false"
       },
-      {
+      /*{
          "puae_cpu_compatibility",
          "CPU Compatibility",
          "",
@@ -370,36 +370,7 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "exact"
-      },
-      {
-         "puae_cpu_throttle",
-         "CPU Speed",
-         "Ignored with 'Cycle-exact'.",
-         {
-            { "-900.0", "-90\%" },
-            { "-800.0", "-80\%" },
-            { "-700.0", "-70\%" },
-            { "-600.0", "-60\%" },
-            { "-500.0", "-50\%" },
-            { "-400.0", "-40\%" },
-            { "-300.0", "-30\%" },
-            { "-200.0", "-20\%" },
-            { "-100.0", "-10\%" },
-            { "0.0", "Normal" },
-            { "500.0", "+50\%" },
-            { "1000.0", "+100\%" },
-            { "1500.0", "+150\%" },
-            { "2000.0", "+200\%" },
-            { "2500.0", "+250\%" },
-            { "3000.0", "+300\%" },
-            { "3500.0", "+350\%" },
-            { "4000.0", "+400\%" },
-            { "4500.0", "+450\%" },
-            { "5000.0", "+500\%" },
-            { NULL, NULL },
-         },
-         "0.0"
-      },
+      },*/
       {
          "puae_sound_output",
          "Sound Output",
@@ -412,26 +383,6 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "exact"
-      },
-      {
-         "puae_sound_stereo_separation",
-         "Sound Stereo Separation",
-         "",
-         {
-            { "0\%", NULL },
-            { "10\%", NULL },
-            { "20\%", NULL },
-            { "30\%", NULL },
-            { "40\%", NULL },
-            { "50\%", NULL },
-            { "60\%", NULL },
-            { "70\%", NULL },
-            { "80\%", NULL },
-            { "90\%", NULL },
-            { "100\%", NULL },
-            { NULL, NULL },
-         },
-         "100\%"
       },
       {
          "puae_sound_interpol",
@@ -502,21 +453,7 @@ void retro_set_environment(retro_environment_t cb)
          },
          "internal"
       },
-      {
-         "puae_floppy_speed",
-         "Floppy Speed",
-         "",
-         {
-            { "100", "1x" },
-            { "200", "2x" },
-            { "400", "4x" },
-            { "800", "8x" },
-            { "0", "Turbo" },
-            { NULL, NULL },
-         },
-         "100"
-      },
-      {
+      /*{
          "puae_use_whdload",
          "Use WHDLoad.hdf",
          "Restart required.",
@@ -526,7 +463,7 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "enabled"
-      },
+      },*/
       { NULL, NULL, NULL, {{0}}, NULL },
    };
 
@@ -675,6 +612,10 @@ static void update_variables(void)
          video_config &= ~PUAE_VIDEO_HIRES;
    }
 
+	strcat(uae_config, "cpu_compatible=true\n");
+	strcat(uae_config, "cycle_exact=true\n");
+
+/*
    var.key = "puae_cpu_compatibility";
    var.value = NULL;
 
@@ -720,20 +661,7 @@ static void update_variables(void)
          }
       }
    }
-
-   var.key = "puae_cpu_throttle";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "cpu_throttle=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (firstpass != 1)
-         changed_prefs.m68k_speed_throttle=atof(var.value);
-   }
-
+*/
    var.key = "puae_sound_output";
    var.value = NULL;
 
@@ -747,21 +675,6 @@ static void update_variables(void)
       else if (strcmp(var.value, "interrupts") == 0) changed_prefs.produce_sound=1;
       else if (strcmp(var.value, "normal") == 0) changed_prefs.produce_sound=2;
       else if (strcmp(var.value, "exact") == 0) changed_prefs.produce_sound=3;
-   }
-
-   var.key = "puae_sound_stereo_separation";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      int val = atoi(var.value) / 10;
-      changed_prefs.sound_stereo_separation=val;
-
-      char valbuf[50];
-      snprintf(valbuf, 50, "%d", val);
-      strcat(uae_config, "sound_stereo_separation=");
-      strcat(uae_config, valbuf);
-      strcat(uae_config, "\n");
    }
 
    var.key = "puae_sound_interpol";
@@ -805,19 +718,6 @@ static void update_variables(void)
 
       if (strcmp(var.value, "standard") == 0) changed_prefs.sound_filter_type=FILTER_SOUND_TYPE_A500;
       else if (strcmp(var.value, "enhanced") == 0) changed_prefs.sound_filter_type=FILTER_SOUND_TYPE_A1200;
-   }
-
-   var.key = "puae_floppy_speed";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      strcat(uae_config, "floppy_speed=");
-      strcat(uae_config, var.value);
-      strcat(uae_config, "\n");
-
-      if (firstpass != 1)
-         changed_prefs.floppy_speed=atoi(var.value);
    }
 
    var.key = "puae_floppy_sound";
