@@ -206,7 +206,7 @@ void retro_set_environment(retro_environment_t cb)
          },
          "16bit"
       },*/
-      {
+      /*{
          "puae_collision_level",
          "Collision Level",
          "'Sprites and Playfields' is recommended.",
@@ -218,7 +218,7 @@ void retro_set_environment(retro_environment_t cb)
             { NULL, NULL },
          },
          "playfields"
-      },
+      },*/
       /*{
          "puae_cpu_compatibility",
          "CPU Compatibility",
@@ -337,24 +337,26 @@ static void update_variables(void)
    var.key = "puae_video_standard";
    var.value = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      /* video_config change only at start */
-      if (video_config_old == 0)
-         if (strcmp(var.value, "PAL") == 0)
-         {
-            video_config |= PUAE_VIDEO_PAL;
-            strcat(uae_config, "ntsc=false\n");
-         }
-         else
-         {
-            video_config |= PUAE_VIDEO_NTSC;
-            strcat(uae_config, "ntsc=true\n");
-            real_ntsc = true;
-         }
-   }
-
-   video_config_allow_hz_change = 0;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+	{
+		/* video_config change only at start */
+		if (video_config_old == 0)
+		{
+			if (strcmp(var.value, "PAL") == 0)
+			{
+				video_config |= PUAE_VIDEO_PAL;
+				video_config &= ~PUAE_VIDEO_NTSC;
+				strcat(uae_config, "ntsc=false\n");
+			}
+			else
+			{
+				video_config |= PUAE_VIDEO_NTSC;
+				video_config &= ~PUAE_VIDEO_PAL;
+				strcat(uae_config, "ntsc=true\n");
+				real_ntsc = true;
+			}
+        }
+	}
 
 	strcat(uae_config, "cpu_compatible=true\n");
 	strcat(uae_config, "cycle_exact=true\n");
@@ -394,6 +396,8 @@ static void update_variables(void)
 	strcat(uae_config, "floppy2sound=1\n");
 	strcat(uae_config, "floppy3sound=1\n");
 
+	strcat(uae_config, "collision_level=2\n"); // sprites&playfields (recommended default)
+/*
    var.key = "puae_collision_level";
    var.value = NULL;
 
@@ -411,7 +415,7 @@ static void update_variables(void)
          else if (strcmp(var.value, "full") == 0) changed_prefs.collision_level=3;
       }
    }
-
+*/
 	changed_prefs.gfx_framerate=1; // no frameskip
 
    /*var.key = "puae_gfx_colors";
