@@ -589,7 +589,7 @@ static bool disk_set_image_index(unsigned index)
 		if ((index < dc->count) && (dc->files[index]))
 		{
 			dc->index = index;
-			printf("Disk (%d) inserted into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
+			log_cb(RETRO_LOG_INFO, "Disk(%d) into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
 			return true;
 		}
 	}
@@ -695,9 +695,9 @@ void retro_init(void)
      retro_save_directory=retro_system_directory;
    }
 
-   log_cb(RETRO_LOG_INFO, "Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
-   log_cb(RETRO_LOG_INFO, "Retro SAVE_DIRECTORY %s\n",retro_save_directory);
-   log_cb(RETRO_LOG_INFO, "Retro CONTENT_DIRECTORY %s\n",retro_content_directory);
+   //log_cb(RETRO_LOG_INFO, "Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
+   //log_cb(RETRO_LOG_INFO, "Retro SAVE_DIRECTORY %s\n",retro_save_directory);
+   //log_cb(RETRO_LOG_INFO, "Retro CONTENT_DIRECTORY %s\n",retro_content_directory);
 
    // Disk control interface
    dc = dc_create();
@@ -749,7 +749,7 @@ void retro_init(void)
 
    if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
    {
-      fprintf(stderr, "[libretro-uae]: RGB565 is not supported.\n");
+      log_cb(RETRO_LOG_ERROR, "[libretro-uae]: RGB565 is not supported. Abort!\n");
       exit(0);//return false;
    }
 
@@ -791,20 +791,20 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       switch(device)
       {
          case RETRO_DEVICE_JOYPAD:
-            printf("Controller %u: RetroPad\n", (port+1));
+            log_cb(RETRO_LOG_INFO, "Controller %u: RetroPad\n", (port+1));
             break;
 
          case RETRO_DEVICE_UAE_CD32PAD:
-            printf("Controller %u: CD32 Pad\n", (port+1));
+            log_cb(RETRO_LOG_INFO, "Controller %u: CD32 Pad\n", (port+1));
             cd32_pad_enabled[uae_port]=1;
             break;
 
          case RETRO_DEVICE_UAE_JOYSTICK:
-            printf("Controller %u: Joystick\n", (port+1));
+            log_cb(RETRO_LOG_INFO, "Controller %u: Joystick\n", (port+1));
             break;
 
          case RETRO_DEVICE_NONE:
-            printf("Controller %u: Unplugged\n", (port+1));
+            log_cb(RETRO_LOG_INFO, "Controller %u: Unplugged\n", (port+1));
             break;
       }
 
@@ -831,7 +831,7 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
 {
    request_update_av_info = false;
    float hz = currprefs.chipset_refreshrate;
-   fprintf(stderr, "[libretro-uae]: Trying to update AV geometry:%d timing:%d, to: ntsc:%d hz:%0.4f, from video_config:%d, video_aspect:%d\n", change_geometry, change_timing, isntsc, hz, video_config, 0);
+//   log_cb(RETRO_LOG_ERROR, "[libretro-uae]: Trying to update AV geometry:%d timing:%d, to: ntsc:%d hz:%0.4f, from video_config:%d, video_aspect:%d\n", change_geometry, change_timing, isntsc, hz, video_config, 0);
 
    /* Change PAL/NTSC with a twist, thanks to Dyna Blaster
 
@@ -884,7 +884,7 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
       /* If still no change */
       if (video_config_old == video_config)
       {
-         fprintf(stderr, "[libretro-uae]: Already at wanted AV\n");
+//         log_cb(RETRO_LOG_INFO, "[libretro-uae]: Already at wanted AV\n");
          change_timing = false; // Allow other calculations but don't alter timing
       }
    }
@@ -924,12 +924,17 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
       change_timing = 0;
 
    /* Logging */
-   if (change_geometry && change_timing) {
-      fprintf(stderr, "[libretro-uae]: Update av_info: %dx%d %0.4fHz, video_config:%d\n", retrow, retroh, hz, video_config_geometry);
-   } else if (change_geometry && !change_timing) {
-      fprintf(stderr, "[libretro-uae]: Update geometry: %dx%d, video_config:%d\n", retrow, retroh, video_config_geometry);
-   } else if (!change_geometry && change_timing) {
-      fprintf(stderr, "[libretro-uae]: Update timing: %0.4fHz, video_config:%d\n", hz, video_config_geometry);
+   if (change_geometry && change_timing)
+   {
+      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update av_info: %dx%d %0.4fHz, video_config:%d\n", retrow, retroh, hz, video_config_geometry);
+   }
+   else if (change_geometry && !change_timing)
+   {
+      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update geometry: %dx%d, video_config:%d\n", retrow, retroh, video_config_geometry);
+   }
+   else if (!change_geometry && change_timing)
+   {
+      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update timing: %0.4fHz, video_config:%d\n", hz, video_config_geometry);
    }
 
    if (change_timing) {
@@ -959,12 +964,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
       if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
       {
-         fprintf(stderr, "[libretro-uae]: XRGB8888 is not supported. Trying RGB565\n");
+         log_cb(RETRO_LOG_INFO, "[libretro-uae]: XRGB8888 is not supported. Trying RGB565\n");
          fmt = RETRO_PIXEL_FORMAT_RGB565;
          pix_bytes = 2;
          if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
          {
-            fprintf(stderr, "[libretro-uae]: RGB565 is not supported.\n");
+            log_cb(RETRO_LOG_ERROR, "[libretro-uae]: RGB565 is not supported. Aborting.\n");
             exit(0);//return false;
          }
       }
@@ -1030,6 +1035,7 @@ void retro_run(void)
 
    if (firstpass)
    {
+	  log_cb(RETRO_LOG_INFO, "firstpass complete\n" );
       firstpass=0;
       goto sortie;
    }
@@ -1073,10 +1079,10 @@ bool retro_load_game(const struct retro_game_info *info)
          || strendswith(full_path, HDZ_FILE_EXT)
          || strendswith(full_path, M3U_FILE_EXT))
 	  {
-	     printf("Game '%s' is a disk, a hard drive image or a m3u file.\n", full_path);
+	     log_cb(RETRO_LOG_INFO, "Game '%s' is a disk, a hard drive image or a m3u file.\n", full_path);
 
 	     path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
-	     printf("Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
+	     log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
 
 	     // Open tmp config file
 	     FILE * configfile;
@@ -1088,49 +1094,49 @@ bool retro_load_game(const struct retro_game_info *info)
             if (strstr(full_path, "(A1200OG)") != NULL || strstr(full_path, "(A1200NF)") != NULL)
             {
                // Use A1200 barebone
-               printf("Found '(A1200OG)' or '(A1200NF)' in filename '%s'. Booting A1200 NoFast with Kickstart 3.1 r40.068 rom.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A1200OG)' or '(A1200NF)' in filename '%s'. Booting A1200 NoFast with Kickstart 3.1 r40.068 rom.\n", full_path);
                fprintf(configfile, A1200OG);
                path_join((char*)&kickstart, retro_system_directory, A1200_ROM);
             }
             else if (strstr(full_path, "(A1200)") != NULL || strstr(full_path, "(AGA)") != NULL)
             {
                // Use A1200
-               printf("Found '(A1200)' or '(AGA)' in filename '%s'. Booting A1200 with Kickstart 3.1 r40.068 rom.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A1200)' or '(AGA)' in filename '%s'. Booting A1200 with Kickstart 3.1 r40.068 rom.\n", full_path);
                fprintf(configfile, A1200);
                path_join((char*)&kickstart, retro_system_directory, A1200_ROM);
             }
             else if (strstr(full_path, "(A600)") != NULL || strstr(full_path, "(ECS)") != NULL)
             {
                // Use A600
-               printf("Found '(A600)' or '(ECS)' in filename '%s'. Booting A600 with Kickstart 3.1 r40.063 rom.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A600)' or '(ECS)' in filename '%s'. Booting A600 with Kickstart 3.1 r40.063 rom.\n", full_path);
                fprintf(configfile, A600);
                path_join((char*)&kickstart, retro_system_directory, A600_ROM);
             }
             else if (strstr(full_path, "(A500+)") != NULL || strstr(full_path, "(A500PLUS)") != NULL)
             {
                // Use A500+
-               printf("Found '(A500+)' or '(A500PLUS)' in filename '%s'. Booting A500+ with Kickstart 2.04 r37.175.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A500+)' or '(A500PLUS)' in filename '%s'. Booting A500+ with Kickstart 2.04 r37.175.\n", full_path);
                fprintf(configfile, A500PLUS);
                path_join((char*)&kickstart, retro_system_directory, A500KS2_ROM);
             }
             else if (strstr(full_path, "(A500OG)") != NULL || strstr(full_path, "(512K)") != NULL)
             {
                // Use A500 barebone
-               printf("Found '(A500OG)' or '(512K)' in filename '%s'. Booting A500 512K with Kickstart 1.3 r34.005.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A500OG)' or '(512K)' in filename '%s'. Booting A500 512K with Kickstart 1.3 r34.005.\n", full_path);
                fprintf(configfile, A500OG);
                path_join((char*)&kickstart, retro_system_directory, A500_ROM);
             }
             else if (strstr(full_path, "(A500)") != NULL || strstr(full_path, "(OCS)") != NULL)
             {
                // Use A500
-               printf("Found '(A500)' or '(OCS)' in filename '%s'. Booting A500 with Kickstart 1.3 r34.005.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(A500)' or '(OCS)' in filename '%s'. Booting A500 with Kickstart 1.3 r34.005.\n", full_path);
                fprintf(configfile, A500);
                path_join((char*)&kickstart, retro_system_directory, A500_ROM);
             }
             else
             {
                // No machine specified, we will use the configured one
-               printf("No machine specified in filename '%s'. Booting default configuration.\n", full_path);
+               log_cb(RETRO_LOG_INFO, "No machine specified in filename '%s'. Booting default configuration.\n", full_path);
                fprintf(configfile, uae_machine);
                path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
             }
@@ -1141,12 +1147,12 @@ bool retro_load_game(const struct retro_game_info *info)
             // If region was specified in the name of the game
             if (strstr(full_path, "(NTSC)") != NULL)
             {
-               printf("Found '(NTSC)' in filename '%s'\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(NTSC)' in filename '%s'\n", full_path);
                fprintf(configfile, "ntsc=true\n");
             }
             else if (strstr(full_path, "(PAL)") != NULL)
             {
-               printf("Found '(PAL)' in filename '%s'\n", full_path);
+               log_cb(RETRO_LOG_INFO, "Found '(PAL)' in filename '%s'\n", full_path);
                fprintf(configfile, "ntsc=false\n");
             }
 
@@ -1154,8 +1160,8 @@ bool retro_load_game(const struct retro_game_info *info)
             if (!file_exists(kickstart))
             {
                // Kickstart rom not found
-               fprintf(stderr, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
-               fprintf(stderr, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
+               log_cb(RETRO_LOG_ERROR, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
+               log_cb(RETRO_LOG_ERROR, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
                fclose(configfile);
                return false;
             }
@@ -1174,9 +1180,13 @@ bool retro_load_game(const struct retro_game_info *info)
 
                   // Verify WHDLoad
                   if (file_exists(whdload))
+                  {
                      fprintf(configfile, "hardfile=read-write,32,1,2,512,%s\n", (const char*)&whdload);
+			      }
                   else
-                     fprintf(stderr, "WHDLoad image file '%s' not found.\n", (const char*)&whdload);
+                  {
+                     log_cb(RETRO_LOG_ERROR, "WHDLoad image file '%s' not found.\n", (const char*)&whdload);
+			      }
                }
                fprintf(configfile, "hardfile=read-write,32,1,2,512,%s\n", full_path);
             }
@@ -1189,9 +1199,11 @@ bool retro_load_game(const struct retro_game_info *info)
                   dc_parse_m3u(dc, full_path);
 
                   // Some debugging
-                  printf("M3U file parsed, %d file(s) found\n", dc->count);
+                  log_cb(RETRO_LOG_INFO, "M3U file parsed, %d file(s) found\n", dc->count);
                   for (unsigned i = 0; i < dc->count; i++)
-                     printf("File %d: %s\n", i+1, dc->files[i]);
+                  {
+                     log_cb(RETRO_LOG_INFO, "File %d: %s\n", i+1, dc->files[i]);
+				  }
                }
                else
                {
@@ -1203,7 +1215,7 @@ bool retro_load_game(const struct retro_game_info *info)
                // Init first disk
                dc->index = 0;
                dc->eject_state = false;
-               printf("Disk (%d) inserted into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
+               log_cb(RETRO_LOG_INFO, "Disk (%d) inserted into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
                fprintf(configfile, "floppy0=%s\n", dc->files[0]);
 
                // Append rest of the disks to the config if m3u is a MultiDrive-m3u
@@ -1214,7 +1226,7 @@ bool retro_load_game(const struct retro_game_info *info)
                      dc->index = i;
                      if (i <= 3)
                      {
-                        printf("Disk (%d) inserted into drive DF%d: %s\n", dc->index+1, i, dc->files[dc->index]);
+                        log_cb(RETRO_LOG_INFO, "Disk (%d) inserted into drive DF%d: %s\n", dc->index+1, i, dc->files[dc->index]);
                         fprintf(configfile, "floppy%d=%s\n", i, dc->files[i]);
 
                         // By default only DF0: is enabled, so floppyXtype needs to be set on the extra drives
@@ -1235,18 +1247,18 @@ bool retro_load_game(const struct retro_game_info *info)
          else
          {
             // Error
-            fprintf(stderr, "Error while writing '%s' file.\n", (const char*)&RPATH);
+            log_cb(RETRO_LOG_ERROR, "Error while writing '%s' file.\n", (const char*)&RPATH);
             return false;
          }
       }
       // If argument is an uae file
 	  else if (strendswith(full_path, UAE_FILE_EXT))
 	  {
-	     printf("Game '%s' is an UAE config file.\n", full_path);
+	     log_cb(RETRO_LOG_INFO, "Game '%s' is an UAE config file.\n", full_path);
 
 	     // Prepend default config
 	     path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
-	     printf("Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
+	     log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
 
 	     // Open tmp config file
 	     FILE * configfile;
@@ -1279,7 +1291,7 @@ bool retro_load_game(const struct retro_game_info *info)
          else
          {
             // Error
-            fprintf(stderr, "Error while writing '%s' file.\n", (const char*)&RPATH);
+            log_cb(RETRO_LOG_ERROR, "Error while writing '%s' file.\n", (const char*)&RPATH);
             return false;
          }
       }
@@ -1287,7 +1299,7 @@ bool retro_load_game(const struct retro_game_info *info)
 	  else
 	  {
 	     // Unsupported file format
-	     fprintf(stderr, "Content '%s'. Unsupported file format.\n", full_path);
+	     log_cb(RETRO_LOG_ERROR, "Content '%s'. Unsupported file format.\n", full_path);
 	     return false;
 	  }
    }
@@ -1295,7 +1307,7 @@ bool retro_load_game(const struct retro_game_info *info)
    else
    {
       path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
-      printf("Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
+      log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
 
       // Open tmp config file
       FILE * configfile;
@@ -1315,8 +1327,8 @@ bool retro_load_game(const struct retro_game_info *info)
          if (!file_exists(kickstart))
          {
             // Kickstart rom not found
-            fprintf(stderr, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
-            fprintf(stderr, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
+            log_cb(RETRO_LOG_ERROR, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
+            log_cb(RETRO_LOG_ERROR, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
             fclose(configfile);
             return false;
          }
@@ -1332,7 +1344,7 @@ bool retro_load_game(const struct retro_game_info *info)
       h = defaulth;
    }
 
-   fprintf(stderr, "[libretro-uae]: Resolution selected: %dx%d (default: %dx%d)\n", w, h, defaultw, defaulth);
+   log_cb(RETRO_LOG_INFO, "[libretro-uae]: Resolution selected: %dx%d (default: %dx%d)\n", w, h, defaultw, defaulth);
 
    retrow = w;
    retroh = h;
