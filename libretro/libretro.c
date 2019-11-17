@@ -14,6 +14,13 @@
 #include "savestate.h"
 #include "custom.h"
 
+// LOG
+static void fallback_log(enum retro_log_level level, const char *fmt, ...)
+{
+}
+
+retro_log_printf_t log_cb = fallback_log;
+
 #define EMULATOR_DEF_WIDTH 720
 #define EMULATOR_DEF_HEIGHT 568
 #define EMULATOR_MAX_WIDTH 1024
@@ -650,6 +657,13 @@ static struct retro_disk_control_callback disk_interface = {
 // Init
 void retro_init(void)
 {
+	// Init log
+	struct retro_log_callback log;
+	if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &log))
+		log_cb = log.log;
+	else
+		log_cb = fallback_log;
+
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
 
    const char *system_dir = NULL;
@@ -681,9 +695,9 @@ void retro_init(void)
      retro_save_directory=retro_system_directory;
    }
 
-   printf("Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
-   printf("Retro SAVE_DIRECTORY %s\n",retro_save_directory);
-   printf("Retro CONTENT_DIRECTORY %s\n",retro_content_directory);
+   log_cb(RETRO_LOG_INFO, "Retro SYSTEM_DIRECTORY %s\n",retro_system_directory);
+   log_cb(RETRO_LOG_INFO, "Retro SAVE_DIRECTORY %s\n",retro_save_directory);
+   log_cb(RETRO_LOG_INFO, "Retro CONTENT_DIRECTORY %s\n",retro_content_directory);
 
    // Disk control interface
    dc = dc_create();
