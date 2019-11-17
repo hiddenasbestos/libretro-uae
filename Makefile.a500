@@ -22,6 +22,8 @@ ifneq ($(GIT_VERSION)," unknown")
 	CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
+LDFLAGS += -Wl,-Map,output.map
+
 CORE_DIR  := .
 ROOT_DIR  := .
 
