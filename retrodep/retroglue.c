@@ -3,7 +3,7 @@
         RETRO GLUE
 
 *********************************************/
- 
+
 #include "sysconfig.h"
 #include "sysdeps.h"
 
@@ -30,11 +30,15 @@ extern unsigned int uae_devices[4];
 extern unsigned int inputdevice_finalized;
 extern int pix_bytes;
 
-#define LOG_MSG(...) 
-#define LOG_MSG2(...) 
+#define LOG_MSG(...)
+#define LOG_MSG2(...)
+
+extern retro_log_printf_t log_cb;
 
 extern int defaultw;
 extern int defaulth;
+
+extern int libretro_frame_end;
 
 unsigned short int clut[] = {
 	0x0000,  /* full background transparency */
@@ -140,7 +144,8 @@ int retro_renderSound(short* samples, int sampleCount)
 
 void retro_flush_screen( struct vidbuf_description *gfxinfo, int ystart, int yend )
 {
-	// todo
+	// flag that we should end the frame, return out of retro_run.
+	libretro_frame_end = 1;
 }
 
 
@@ -179,7 +184,7 @@ int graphics_init(void) {
 	currprefs.gfx_linedbl = 0;	//disable line doubling
 #else
 	currprefs.gfx_size_win.height = defaulth;
-#endif	
+#endif
 	opt_scrw = currprefs.gfx_size_win.width;
 	opt_scrh = currprefs.gfx_size_win.height;
 
@@ -248,7 +253,7 @@ int graphics_setup(void)
 	//32bit mode
 	//Rw, Gw, Bw,   Rs, Gs, Bs,   Aw, As, Avalue, swap
 	if (pix_bytes == 2)
-		alloc_colors64k (5, 6, 5, 11, 5, 0, 0, 0, 0, 0); 
+		alloc_colors64k (5, 6, 5, 11, 5, 0, 0, 0, 0, 0);
 	else
 		alloc_colors64k (8, 8, 8, 16, 8, 0, 0, 0, 0, 0);
 
@@ -403,12 +408,12 @@ static TCHAR *get_joystick_friendlyname (int joy)
 }
 
 struct inputdevice_functions inputdevicefunc_joystick = {
-    init_joysticks, 
-    close_joysticks, 
+    init_joysticks,
+    close_joysticks,
     acquire_joystick,
     unacquire_joystick,
-    read_joysticks, 
-    get_joystick_num, 
+    read_joysticks,
+    get_joystick_num,
     get_joystick_friendlyname,
     get_joystick_uniquename,
     get_joystick_widget_num,
@@ -639,15 +644,15 @@ static int get_kb_flags (int num)
 }
 
 struct inputdevice_functions inputdevicefunc_keyboard = {
-    init_kb, 
-    close_kb, 
-    acquire_kb, 
+    init_kb,
+    close_kb,
+    acquire_kb,
     unacquire_kb,
-    read_kb, 
-    get_kb_num, 
+    read_kb,
+    get_kb_num,
     get_kb_friendlyname,
     get_kb_uniquename,
-    get_kb_widget_num, 
+    get_kb_widget_num,
     get_kb_widget_type,
     get_kb_widget_first,
     get_kb_flags

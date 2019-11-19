@@ -412,7 +412,7 @@ void m68k_divl (uae_u32, uae_u32, uae_u16);
 void m68k_mull (uae_u32, uae_u32, uae_u16);
 void init_m68k (void);
 void init_m68k_full (void);
-void m68k_go (int);
+void m68k_go (int, int resume);
 void m68k_dumpstate (uaecptr *);
 void m68k_dumpstate2 (uaecptr, uaecptr *);
 int getDivu68kCycles (uae_u32 dividend, uae_u16 divisor);

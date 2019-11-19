@@ -581,6 +581,7 @@ void fixup_prefs (struct uae_prefs *p)
 }
 
 int quit_program = 0;
+int libretro_frame_end = 0;
 static int restart_program;
 static TCHAR restart_config[MAX_DPATH];
 static int default_config;

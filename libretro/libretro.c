@@ -14,7 +14,7 @@
 #include "savestate.h"
 #include "custom.h"
 
-extern void m68k_go (int);
+extern void m68k_go (int, int resume);
 
 // LOG
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
@@ -1008,13 +1008,16 @@ void retro_run(void)
 
 		log_cb(RETRO_LOG_INFO, "[libretro-uae] UAE ready.\n" );
 
-		// run emulation for a frame.
-//		m68k_go( 1 );
+		// run emulation first pass.
+		m68k_go( 1, 0 );
 	}
 	else
 	{
 		retro_poll_event();
 		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
+
+		// resume emulation for a frame.
+		m68k_go( 1, 1 );
 	}
 }
 

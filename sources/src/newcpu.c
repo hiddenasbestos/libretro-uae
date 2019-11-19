@@ -38,6 +38,9 @@
 #include "inputdevice.h"
 #include "misc.h"
 
+#include "libretro.h"
+extern retro_log_printf_t log_cb;
+
 #define f_out write_log
 #define console_out write_log
 #define console_out_f write_log
@@ -2471,17 +2474,17 @@ static void Exception_mmu030 (int nr, uaecptr oldpc)
 {
     uae_u32 currpc = m68k_getpc(), newpc;
     int sv = regs.s;
-    
+
     exception_debug(nr);
     MakeSR();
-    
+
     if (!regs.s) {
         regs.usp = m68k_areg(regs, 7);
         m68k_areg(regs, 7) = regs.m ? regs.msp : regs.isp;
         regs.s = 1;
         mmu_set_super(1);
     }
- 
+
 #if 0
     if (nr < 24 || nr > 31) { // do not print debugging for interrupts
         write_log (_T("Exception_mmu030: Exception %i: %08x %08x %08x\n"),
@@ -2510,7 +2513,7 @@ static void Exception_mmu030 (int nr, uaecptr oldpc)
     } else {
         Exception_build_stack_frame(oldpc, currpc, regs.mmu_ssw, nr, 0x0);
     }
-    
+
 	if (newpc & 1) {
 		if (nr == 2 || nr == 3)
 			cpu_halt (2);
@@ -2549,7 +2552,7 @@ static void Exception_mmu (int nr, uaecptr oldpc)
 		regs.s = 1;
 		mmu_set_super (1);
 	}
-    
+
 	newpc = x_get_long (regs.vbr + 4 * nr);
 #if 0
 	write_log (_T("Exception %d: %08x -> %08x\n"), nr, currpc, newpc);
@@ -2573,7 +2576,7 @@ static void Exception_mmu (int nr, uaecptr oldpc)
 	} else {
 		Exception_build_stack_frame(oldpc, currpc, regs.mmu_ssw, nr, 0x0);
 	}
-    
+
 	if (newpc & 1) {
 		if (nr == 2 || nr == 3)
 			cpu_halt (2);
@@ -3342,7 +3345,7 @@ static void m68k_reset (bool hardreset)
 	regs.caar = regs.cacr = 0;
 	regs.itt0 = regs.itt1 = regs.dtt0 = regs.dtt1 = 0;
 	regs.tcr = regs.mmusr = regs.urp = regs.srp = regs.buscr = 0;
-	mmu_tt_modified (); 
+	mmu_tt_modified ();
 	if (currprefs.cpu_model == 68020) {
 		regs.cacr |= 8;
 		set_cpu_caches ();
@@ -4155,6 +4158,7 @@ static void m68k_run_1_ce (void)
 		if (cpu_tracer) {
 			cputrace.state = 0;
 		}
+
 cont:
 		if (cputrace.needendcycles) {
 			cputrace.needendcycles = 0;
@@ -4788,7 +4792,7 @@ static void m68k_run_2 (void)
 			write_log (_T("%04X "), opcode);
 			used[opcode] = 1;
 		}
-#endif	
+#endif
 		do_cycles (cpu_cycles);
 		cpu_cycles = (*cpufunctbl[opcode])(opcode);
 		cpu_cycles = adjust_cycles (cpu_cycles);
@@ -4830,23 +4834,31 @@ static void exception2_handle (uaecptr addr, uaecptr fault)
 	Exception (2);
 }
 
-void m68k_go (int may_quit)
-{
-	int hardboot = 1;
-	int startup = 1;
+static int hardboot = 1;
+static int startup = 1;
 
-	if (in_m68k_go || !may_quit) {
-		write_log (_T("Bug! m68k_go is not reentrant.\n"));
-		abort ();
+void m68k_go (int may_quit, int resume)
+{
+	if ( resume == 0 )
+	{
+		hardboot = 1;
+		startup = 1;
+		libretro_frame_end = 0;
+
+		if (in_m68k_go || !may_quit) {
+			write_log (_T("Bug! m68k_go is not reentrant.\n"));
+			abort ();
+		}
+
+		reset_frame_rate_hack ();
+		update_68k_cycles ();
+		start_cycles = 0;
+
+		set_cpu_tracer (false);
+
+		in_m68k_go++;
 	}
 
-	reset_frame_rate_hack ();
-	update_68k_cycles ();
-	start_cycles = 0;
-
-	set_cpu_tracer (false);
-
-	in_m68k_go++;
 	for (;;) {
 		void (*run_func)(void);
 
@@ -4994,6 +5006,12 @@ void m68k_go (int may_quit)
 #endif
 		run_func ();
 		unset_special (SPCFLAG_BRK | SPCFLAG_MODE_CHANGE);
+
+		if ( libretro_frame_end )
+		{
+			libretro_frame_end = 0;
+			return;
+		}
 	}
 #ifdef NATMEM_OFFSET
 	protect_roms (false);
@@ -6190,7 +6208,7 @@ void divbyzero_special (bool issigned, uae_s32 dst)
 	if (currprefs.cpu_model == 68020 || currprefs.cpu_model == 68030) {
 		CLEAR_CZNV ();
 		if (issigned == false) {
-			if (dst < 0) 
+			if (dst < 0)
 				SET_NFLG (1);
 			SET_ZFLG (!GET_NFLG ());
 			SET_VFLG (1);

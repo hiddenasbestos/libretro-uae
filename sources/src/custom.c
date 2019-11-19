@@ -1140,7 +1140,7 @@ STATIC_INLINE void maybe_first_bpl1dat (int hpos)
 static void do_right_ddf_hack (int nr, int hpos)
 {
 	int shift;
-	
+
 	if (GET_RES_AGNUS (bplcon0) != RES_LORES)
 		return;
 	if (hpos < 0xd8)
@@ -2047,7 +2047,7 @@ static void start_bpl_dma (int hpos, int hstart)
 		bpldmawasactive = true;
 
 	} else {
-		
+
 		// this is a hack, something weird happens without this
 		// (Subtle Shades)
 		thisline_decision.plfright++;
@@ -3153,13 +3153,13 @@ void compute_framesync (void)
 		int res = GET_RES_AGNUS (bplcon0);
 		int vres = islace ? 1 : 0;
 		int res2, vres2;
-			
+
 		res2 = currprefs.gfx_resolution;
 		if (doublescan > 0)
 			res2++;
 		if (res2 > RES_MAX)
 			res2 = RES_MAX;
-		
+
 		vres2 = currprefs.gfx_vresolution;
 		if (doublescan > 0 && !islace)
 			vres2--;
@@ -3174,7 +3174,7 @@ void compute_framesync (void)
 
 		gfxvidinfo.inwidth =  (((start > stop ? (maxhpos - (maxhpos - start + stop)) : (maxhpos - (stop - start) + 2)) * 2) << res2);
 		gfxvidinfo.inxoffset = ((stop + 1) & ~1) * 2;
-		
+
 		gfxvidinfo.extrawidth = 0;
 		gfxvidinfo.inwidth2 = gfxvidinfo.inwidth;
 
@@ -3301,7 +3301,7 @@ void init_hz (bool checkvposw)
 		maxhpos = htotal + 1;
 		vblank_hz = 227.0 * 312.0 * 50.0 / (maxvpos * maxhpos);
 		minfirstline = vsstop > vbstop ? vsstop : vbstop;
-		if (minfirstline > maxvpos / 2) 
+		if (minfirstline > maxvpos / 2)
 			minfirstline = vsstop > vsstop ? vbstop : vsstop;
 		if (minfirstline < 2)
 			minfirstline = 2;
@@ -3413,7 +3413,7 @@ static void calcdiw (void)
 
 	diwfirstword = coord_diw_to_window_x (hstrt);
 	diwlastword = coord_diw_to_window_x (hstop);
-	
+
 	if (diwfirstword >= diwlastword) {
 		diwfirstword = min_diwlastword;
 		diwlastword = max_diwlastword;
@@ -5072,7 +5072,7 @@ static void update_copper (int until_hpos)
 				int ch_comp = c_hpos;
 				if (ch_comp & 1)
 					ch_comp = 0;
-		
+
 			if (copper_cant_read (old_hpos, 0))
 				continue;
 
@@ -5660,7 +5660,7 @@ static bool framewait (void)
 
 		int freetime;
 		extern int extraframewait;
-		
+
 		if (!vblank_hz_state)
 			return status != 0;
 
@@ -5670,7 +5670,7 @@ static bool framewait (void)
 			int max, adjust, flipdelay = 0, val;
 			frame_time_t now;
 			static struct mavg_data ma_skip, ma_adjust;
-			
+
 			val = 0;
 
 			if (!frame_rendered && !picasso_on) {
@@ -5691,7 +5691,7 @@ static bool framewait (void)
 				adjust = 0;
 			if (adjust > vsynctimebase * 2 / 3)
 				adjust = vsynctimebase * 2 / 3;
-			
+
 			int adjust_avg = mavg (&ma_adjust, adjust, MAVG_VSYNC_SIZE);
 
 			val += adjust_avg;
@@ -5776,7 +5776,7 @@ static bool framewait (void)
 		}
 		return status != 0;
 	}
-	
+
 	status = 1;
 
 	int clockadjust = 0;
@@ -5833,7 +5833,7 @@ static bool framewait (void)
 		max = (int)(vstb * (1000.0 + currprefs.m68k_speed_throttle) / 1000.0 - adjust);
 		vsyncwaittime = curr_time + vstb - adjust;
 		vsyncmintime = curr_time;
-		
+
 		if (max < 0) {
 			max = 0;
 			vsynctimeperline = 1;
@@ -5841,10 +5841,10 @@ static bool framewait (void)
 			vsynctimeperline = max / (maxvpos_nom + 1);
 		}
 		vsyncmaxtime = curr_time + max;
-	
+
 		if (0)
 			write_log (_T("%06d:%06d/%06d\n"), adjust, vsynctimeperline, vstb);
-	
+
 	} else {
 
 		int t = 0;
@@ -5878,7 +5878,7 @@ static bool framewait (void)
 			vsynctimeperline = 0;
 		else if (vsynctimeperline > vstb / 3)
 			vsynctimeperline = vstb / 3;
-		
+
 		frame_shown = true;
 
 	}
@@ -5988,7 +5988,7 @@ static void vsync_handler_pre (void)
 	}
 
 	bool frameok = framewait ();
-	
+
 	if (!picasso_on) {
 		if (!frame_rendered && vblank_hz_state) {
 			frame_rendered = render_screen (false);
@@ -8118,7 +8118,7 @@ uae_u8 *save_custom_event_delay (int *len, uae_u8 *dstptr)
 			save_u8 (1);
 			save_u64 (e->evtime - get_cycles ());
 			save_u32 (e->data);
-		
+
 		}
 	}
 
@@ -8163,7 +8163,7 @@ void check_prefs_changed_custom (void)
 	currprefs.gfx_framerate = changed_prefs.gfx_framerate;
 	if (currprefs.turbo_emulation != changed_prefs.turbo_emulation)
 		warpmode (changed_prefs.turbo_emulation);
-	if (inputdevice_config_change_test ()) 
+	if (inputdevice_config_change_test ())
 		inputdevice_copyconfig (&changed_prefs, &currprefs);
 	currprefs.immediate_blits = changed_prefs.immediate_blits;
 	currprefs.waiting_blits = changed_prefs.waiting_blits;

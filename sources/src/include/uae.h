@@ -41,6 +41,7 @@ extern void getfilepart (TCHAR *out, int size, const TCHAR *path);
 extern uae_u32 getlocaltime (void);
 
 extern int quit_program;
+extern int libretro_frame_end;
 extern bool console_emulation;
 
 extern TCHAR warning_buffer[256];

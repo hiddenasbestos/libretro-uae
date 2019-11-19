@@ -3612,6 +3612,12 @@ void vsync_handle_redraw (int long_frame, int lof_changed, uae_u16 bplcon0p, uae
 	if (!picasso_on)
 		frame_drawn ();
 #endif
+
+	if ( libretro_frame_end )
+	{
+		set_special (SPCFLAG_BRK);
+		return;
+	}
 }
 
 void hsync_record_line_state (int lineno, enum nln_how how, int changed)
