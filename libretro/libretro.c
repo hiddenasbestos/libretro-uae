@@ -560,13 +560,28 @@ static bool disk_set_image_index(unsigned index)
 	{
 		// Same disk...
 		// This can mess things in the emu
-		if (index == dc->index)
-			return true;
+//		if(index == dc->index) // <-- fix for running in no-content mode.
+//			return true;
 
 		if ((index < dc->count) && (dc->files[index]))
 		{
+			changed_prefs.floppyslots[0].df[0] = 0;
+			disk_eject(0);
+			DISK_check_change();
+
 			dc->index = index;
-			log_cb(RETRO_LOG_INFO, "Disk(%d) into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
+			log_cb(RETRO_LOG_INFO, "Disk(%d) changed into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
+
+			//check whether drive is enabled
+			if (currprefs.floppyslots[0].dfxtype < 0)
+			{
+				changed_prefs.floppyslots[0].dfxtype = 0;
+				DISK_check_change();
+			}
+			changed_prefs = currprefs;
+			strcpy (changed_prefs.floppyslots[0].df,dc->files[dc->index]);
+			DISK_check_change();
+
 			return true;
 		}
 	}
@@ -1003,11 +1018,6 @@ void retro_run(void)
 
 		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
 
-		// init emulation
-		umain(2, uae_argv);
-
-		log_cb(RETRO_LOG_INFO, "[libretro-uae] UAE ready.\n" );
-
 		// run emulation first pass.
 		m68k_go( 1, 0 );
 	}
@@ -1064,56 +1074,9 @@ bool retro_load_game(const struct retro_game_info *info)
 	     {
 	        char kickstart[RETRO_PATH_MAX];
 
-            // If a machine was specified in the name of the game
-            if (strstr(full_path, "(A1200OG)") != NULL || strstr(full_path, "(A1200NF)") != NULL)
-            {
-               // Use A1200 barebone
-               log_cb(RETRO_LOG_INFO, "Found '(A1200OG)' or '(A1200NF)' in filename '%s'. Booting A1200 NoFast with Kickstart 3.1 r40.068 rom.\n", full_path);
-               fprintf(configfile, A1200OG);
-               path_join((char*)&kickstart, retro_system_directory, A1200_ROM);
-            }
-            else if (strstr(full_path, "(A1200)") != NULL || strstr(full_path, "(AGA)") != NULL)
-            {
-               // Use A1200
-               log_cb(RETRO_LOG_INFO, "Found '(A1200)' or '(AGA)' in filename '%s'. Booting A1200 with Kickstart 3.1 r40.068 rom.\n", full_path);
-               fprintf(configfile, A1200);
-               path_join((char*)&kickstart, retro_system_directory, A1200_ROM);
-            }
-            else if (strstr(full_path, "(A600)") != NULL || strstr(full_path, "(ECS)") != NULL)
-            {
-               // Use A600
-               log_cb(RETRO_LOG_INFO, "Found '(A600)' or '(ECS)' in filename '%s'. Booting A600 with Kickstart 3.1 r40.063 rom.\n", full_path);
-               fprintf(configfile, A600);
-               path_join((char*)&kickstart, retro_system_directory, A600_ROM);
-            }
-            else if (strstr(full_path, "(A500+)") != NULL || strstr(full_path, "(A500PLUS)") != NULL)
-            {
-               // Use A500+
-               log_cb(RETRO_LOG_INFO, "Found '(A500+)' or '(A500PLUS)' in filename '%s'. Booting A500+ with Kickstart 2.04 r37.175.\n", full_path);
-               fprintf(configfile, A500PLUS);
-               path_join((char*)&kickstart, retro_system_directory, A500KS2_ROM);
-            }
-            else if (strstr(full_path, "(A500OG)") != NULL || strstr(full_path, "(512K)") != NULL)
-            {
-               // Use A500 barebone
-               log_cb(RETRO_LOG_INFO, "Found '(A500OG)' or '(512K)' in filename '%s'. Booting A500 512K with Kickstart 1.3 r34.005.\n", full_path);
-               fprintf(configfile, A500OG);
-               path_join((char*)&kickstart, retro_system_directory, A500_ROM);
-            }
-            else if (strstr(full_path, "(A500)") != NULL || strstr(full_path, "(OCS)") != NULL)
-            {
-               // Use A500
-               log_cb(RETRO_LOG_INFO, "Found '(A500)' or '(OCS)' in filename '%s'. Booting A500 with Kickstart 1.3 r34.005.\n", full_path);
-               fprintf(configfile, A500);
-               path_join((char*)&kickstart, retro_system_directory, A500_ROM);
-            }
-            else
-            {
-               // No machine specified, we will use the configured one
-               log_cb(RETRO_LOG_INFO, "No machine specified in filename '%s'. Booting default configuration.\n", full_path);
-               fprintf(configfile, uae_machine);
-               path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
-            }
+			// No machine specified, we will use the configured one
+			fprintf(configfile, uae_machine);
+			path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
 
             // Write common config
             fprintf(configfile, uae_config);
@@ -1186,35 +1149,11 @@ bool retro_load_game(const struct retro_game_info *info)
                   dc_add_file(dc, full_path);
                }
 
-               // Init first disk
+               // Empty drive.
                dc->index = 0;
                dc->eject_state = false;
-               log_cb(RETRO_LOG_INFO, "Disk (%d) inserted into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
-               fprintf(configfile, "floppy0=%s\n", dc->files[0]);
-
-               // Append rest of the disks to the config if m3u is a MultiDrive-m3u
-               if (strstr(full_path, "(MD)") != NULL)
-               {
-                  for (unsigned i = 1; i < dc->count; i++)
-                  {
-                     dc->index = i;
-                     if (i <= 3)
-                     {
-                        log_cb(RETRO_LOG_INFO, "Disk (%d) inserted into drive DF%d: %s\n", dc->index+1, i, dc->files[dc->index]);
-                        fprintf(configfile, "floppy%d=%s\n", i, dc->files[i]);
-
-                        // By default only DF0: is enabled, so floppyXtype needs to be set on the extra drives
-                        if (i > 0)
-                           fprintf(configfile, "floppy%dtype=%d\n", i, 0); // 0 = 3.5" DD
-                     }
-                     else
-                     {
-                        fprintf(stderr, "Too many disks for MultiDrive!\n");
-                        fclose(configfile);
-                        return false;
-                     }
-                  }
-               }
+               log_cb(RETRO_LOG_INFO, "Disk(%d) inserted into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
+               fprintf(configfile, "floppy0=%s\n", dc->files[dc->index]);
             }
             fclose(configfile);
          }
@@ -1324,6 +1263,11 @@ bool retro_load_game(const struct retro_game_info *info)
    retroh = h;
    memset(bmp, 0, sizeof(bmp));
    Screen_SetFullUpdate();
+
+	// init emulation
+	umain(2, uae_argv);
+	log_cb(RETRO_LOG_INFO, "[libretro-uae] UAE ready.\n" );
+
    return true;
 }
 

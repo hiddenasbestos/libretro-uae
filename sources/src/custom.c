@@ -6147,6 +6147,11 @@ static void vsync_handler_post (void)
 	init_hardware_frame ();
 
 	vsync_cycles = get_cycles ();
+
+	if ( libretro_frame_end )
+	{
+		set_special (SPCFLAG_BRK);
+	}
 }
 
 static void copper_check (int n)
