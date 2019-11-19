@@ -90,7 +90,7 @@ extern void gui_update_gfx (void);
 #define NUMSG_KS68EC020     "The selected system ROM requires a 68020 with 24-bit addressing or higher CPU."
 #define NUMSG_KICKREP       "You need to have a floppy disk (image file) in DF0: to use the system ROM replacement."
 #define NUMSG_KICKREPNO     "The floppy disk (image file) in DF0: is not compatible with the system ROM replacement functionality."
-#define NUMSG_NOROM         "Could not load system ROM, trying system ROM replacement.\n"
+#define NUMSG_NOROM         "Could not load system ROM, trying system ROM replacement."
 #define NUMSG_EXPROMNEED    "One of the following expansion boot ROMs is required:\n\n%s\n\nCheck the System ROM path in the Paths panel and click Rescan ROMs."
 #define NUMSG_KS68030       "The selected system ROM requires a 68030 CPU."
 #define NUMSG_KS68030PLUS   "The selected system ROM requires a 68030 or higher CPU."

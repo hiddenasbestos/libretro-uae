@@ -8,16 +8,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include <libco.h>
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
-extern cothread_t mainThread;
-extern cothread_t emuThread;
-extern int retrow; 
+extern int retrow;
 extern int retroh;
 extern int zoomed_height;
 extern bool retro_update_av_info(bool, bool, bool);

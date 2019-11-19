@@ -13,31 +13,23 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include "libretro.h"
+extern retro_log_printf_t log_cb;
+
 #include "uae_string.h"
 #include "uae_types.h"
 #include "writelog.h"
 
 void write_log (const char *fmt, ...)
 {
-    va_list ap;
-    va_start (ap, fmt);
-#ifdef HAVE_VFPRINTF
-    vfprintf (stderr, fmt, ap);
-#else
-    /* Technique stolen from GCC.  */
-    {
-	int x1, x2, x3, x4, x5, x6, x7, x8;
-	x1 = va_arg (ap, int);
-	x2 = va_arg (ap, int);
-	x3 = va_arg (ap, int);
-	x4 = va_arg (ap, int);
-	x5 = va_arg (ap, int);
-	x6 = va_arg (ap, int);
-	x7 = va_arg (ap, int);
-	x8 = va_arg (ap, int);
-	fprintf (stderr, fmt, x1, x2, x3, x4, x5, x6, x7, x8);
-    }
-#endif
+	static char msg[2048];
+	va_list parms;
+
+	va_start (parms,fmt);
+	vsprintf ( msg, fmt, parms);
+	va_end (parms);
+
+	log_cb( RETRO_LOG_INFO, "%s", msg );
 }
 
 #ifdef JIT

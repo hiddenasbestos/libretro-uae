@@ -13,6 +13,9 @@
 #include "gui.h"
 #include "retroglue.h"
 
+#include "libretro.h"
+extern retro_log_printf_t log_cb;
+
 void gui_disk_image_change (int unitnum, const TCHAR *name, bool writeprotected) {}
 
 int gui_open (void)
@@ -162,13 +165,15 @@ void gui_display(int shortcut)
 }
 
 void gui_message (const char *format,...)
-{   
-       static char msg[2048];
-       va_list parms;
+{
+	static char msg[2048];
+	va_list parms;
 
-       va_start (parms,format);
-       vsprintf ( msg, format, parms);
-       va_end (parms);
+	va_start (parms,format);
+	vsprintf ( msg, format, parms);
+	va_end (parms);
+
+	log_cb( RETRO_LOG_INFO, "[gui_message] %s\n", msg );
 }
 
 

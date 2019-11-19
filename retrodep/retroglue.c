@@ -138,9 +138,9 @@ int retro_renderSound(short* samples, int sampleCount)
     }
 }
 
-void retro_flush_screen (struct vidbuf_description *gfxinfo, int ystart, int yend)
+void retro_flush_screen( struct vidbuf_description *gfxinfo, int ystart, int yend )
 {
-	co_switch(mainThread);
+	// todo
 }
 
 

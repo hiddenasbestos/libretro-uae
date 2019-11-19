@@ -14,6 +14,8 @@
 #include "savestate.h"
 #include "custom.h"
 
+extern void m68k_go (int);
+
 // LOG
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -33,9 +35,6 @@ retro_log_printf_t log_cb = fallback_log;
 #error EMULATOR_DEF_WIDTH || EMULATOR_DEF_HEIGHT
 #endif
 
-cothread_t mainThread;
-cothread_t emuThread;
-
 int defaultw = EMULATOR_DEF_WIDTH;
 int defaulth = EMULATOR_DEF_HEIGHT;
 int retrow = 0;
@@ -53,8 +52,7 @@ bool request_update_av_info = false;
 extern uae_u8 *natmem_offset;
 extern uae_u32 natmem_size;
 #endif
-extern unsigned short int bmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
-extern unsigned short int savebmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
+unsigned short int bmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
 extern int SHIFTON;
 extern char RPATH[512];
 static int firstpass = 1;
@@ -65,7 +63,7 @@ unsigned int video_config_geometry = 0;
 unsigned int video_config_allow_hz_change = 0;
 unsigned int inputdevice_finalized = 0;
 
-//#include "libretro-keyboard.i"
+static char *uae_argv[] = { "puae", RPATH };
 
 extern void retro_poll_event(void);
 unsigned int uae_devices[2];
@@ -493,25 +491,6 @@ static void update_variables(void)
    config_changed = 0;
 }
 
-static void retro_wrap_emulator(void)
-{
-   static char *argv[] = { "puae", RPATH };
-   umain(sizeof(argv)/sizeof(*argv), argv);
-
-   environ_cb(RETRO_ENVIRONMENT_SHUTDOWN, 0);
-
-   /* We're done here */
-   co_switch(mainThread);
-
-   /* Dead emulator,
-    * but libco says not to return. */
-   while (true)
-   {
-      LOGI("Running a dead emulator.");
-      co_switch(mainThread);
-   }
-}
-
 //*****************************************************************************
 //*****************************************************************************
 // Disk control
@@ -754,12 +733,6 @@ void retro_init(void)
    memset(bmp, 0, sizeof(bmp));
 
    update_variables();
-
-   if (!emuThread && !mainThread)
-   {
-      mainThread = co_active();
-      emuThread = co_create(65536 * sizeof(void*), retro_wrap_emulator);
-   }
 }
 
 void retro_deinit(void)
@@ -767,9 +740,8 @@ void retro_deinit(void)
 	log_cb(RETRO_LOG_INFO, "[libretro-uae]: Eject disk\n");
 	disk_eject(0);
 
-	if (emuThread)
-		co_delete(emuThread);
-	emuThread = 0;
+	log_cb(RETRO_LOG_INFO, "[libretro-uae]: UAE 'leave_program' call\n");
+	leave_program();
 
 	// Clean the m3u storage
 	if (dc)
@@ -1024,18 +996,26 @@ void retro_run(void)
    if (request_update_av_info)
       retro_update_av_info(1, 0, 0);
 
-   if (firstpass)
-   {
-	  log_cb(RETRO_LOG_INFO, "firstpass complete\n" );
-      firstpass=0;
-      goto sortie;
-   }
+	if (firstpass)
+	{
+		log_cb(RETRO_LOG_INFO, "[libretro-uae] firstpass complete. Starting UAE %s\n", RPATH );
+		firstpass=0;
 
-   retro_poll_event();
+		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
 
-sortie:
-   video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
-   co_switch(emuThread);
+		// init emulation
+		umain(2, uae_argv);
+
+		log_cb(RETRO_LOG_INFO, "[libretro-uae] UAE ready.\n" );
+
+		// run emulation for a frame.
+//		m68k_go( 1 );
+	}
+	else
+	{
+		retro_poll_event();
+		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
+	}
 }
 
 #define ADF_FILE_EXT "adf"

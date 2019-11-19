@@ -36,9 +36,6 @@ void gettimeofday (struct timeval *tv, void *blah)
 #include <time.h>
 #endif
 
-unsigned short int bmp[1024*1024];
-unsigned short int savebmp[1024*1024];
-
 int NPAGE=-1;
 int SHIFTON=-1,ALTON=-1;
 int MOUSEMODE=-1,SHOWKEY=-1,SHOWKEYPOS=-1,SHOWKEYTRANS=-1,STATUSON=-1,LEDON=-1;

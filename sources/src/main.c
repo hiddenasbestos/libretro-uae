@@ -105,7 +105,7 @@ DWORD GetLastError(void)
 
 static void hr (void)
 {
-	write_log (_T("------------------------------------------------------------------------------------\n"));
+	write_log (_T("--------------------------------------------------------------------------------"));
 }
 
 static void show_version (void)
@@ -125,7 +125,7 @@ static void show_version_full (void)
 	write_log (_T("          2003-2007 Richard Drummond\n"));
 	write_log (_T("          2006-2013 Mustafa 'GnoStiC' Tufan\n\n"));
 	write_log (_T("See the source for a full list of contributors.\n"));
-	write_log (_T("This is free software; see the file COPYING for copying conditions.  There is NO\n"));
+	write_log (_T("This is free software; see the file COPYING for copying conditions. There is NO\n"));
 	write_log (_T("warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"));
 	hr ();
 }
@@ -893,25 +893,6 @@ const char* get_current_config_name() {
 * Add #ifdefs around these as appropriate.
 */
 extern unsigned int pause_uae;
-void do_start_program (void)
-{
-	if (quit_program == -UAE_QUIT)
-		return;
-#ifdef JIT
-	if (!canbang && candirect < 0)
-		candirect = 0;
-	if (canbang && candirect < 0)
-		candirect = 1;
-#endif
-	/* Do a reset on startup. Whether this is elegant is debatable. */
-	inputdevice_updateconfig (&changed_prefs, &currprefs);
-	if (quit_program >= 0)
-		quit_program = UAE_RESET;
-
-	{
-		m68k_go (1);
-	}
-}
 
 void do_leave_program (void)
 {
@@ -967,17 +948,12 @@ void do_leave_program (void)
 	machdep_free ();
 }
 
-void start_program (void)
-{
-	gui_display (-1);
-	do_start_program ();
-}
-
 void leave_program (void)
 {
 	do_leave_program ();
+	quit_program = 0;
+	zfile_exit ();
 }
-
 
 void virtualdevice_init (void)
 {
@@ -1139,7 +1115,22 @@ static int real_main2 (int argc, TCHAR **argv)
 			}
 			currprefs.produce_sound = 0;
 		}
-		start_program ();
+
+		gui_display (-1);
+
+		if (quit_program == -UAE_QUIT)
+			return 0;
+#ifdef JIT
+		if (!canbang && candirect < 0)
+			candirect = 0;
+		if (canbang && candirect < 0)
+			candirect = 1;
+#endif
+		/* Do a reset on startup. Whether this is elegant is debatable. */
+		inputdevice_updateconfig (&changed_prefs, &currprefs);
+
+		if (quit_program >= 0)
+			quit_program = UAE_RESET;
 	}
 
 	return 0;
@@ -1165,7 +1156,7 @@ void real_main (int argc, TCHAR **argv)
 #ifndef __LIBRETRO__
 	enumeratedisplays ();
 #endif
-	write_log (_T("Sorting devices and modes..\n"));
+	write_log (_T("Sorting devices and modes.. "));
 #ifndef __LIBRETRO__
 	sortdisplays ();
 #endif
@@ -1180,16 +1171,13 @@ void real_main (int argc, TCHAR **argv)
 #ifdef PARALLEL_PORT
 	paraport_mask = paraport_init ();
 #endif
-	while (restart_program) {
+
+	if ( restart_program )
+	{
 		int ret;
 		changed_prefs = currprefs;
 		ret = real_main2 (argc, argv);
-		if (ret == 0 && quit_to_gui)
-			restart_program = 1;
-		leave_program ();
-		quit_program = 0;
 	}
-	zfile_exit ();
 }
 
 #ifndef NO_MAIN_IN_MAIN_C
