@@ -382,32 +382,21 @@ void retro_poll_event()
       static int16_t mouse_x[2]={0},mouse_y[2]={0};
       static int i=0,j=0;
 
-      int retro_port;
-      for (retro_port = 0; retro_port <= 1; retro_port++)
-      {
-         switch (uae_devices[retro_port])
-         {
-            case RETRO_DEVICE_UAE_CD32PAD:
-               for (i=0;i<16;i++) // All buttons
-               {
-                  if (i<2 || (i>2 && i<12)) // Only skip Select (2)
-                  {
-                     ProcessController(retro_port, i);
-                  }
-               }
-               break;
-
-            case RETRO_DEVICE_UAE_JOYSTICK:
-               for (i=0;i<9;i++) // All buttons up to A
-               {
-                  if (i==0 || (i>3 && i<9)) // DPAD + B + A
-                  {
-                     ProcessController(retro_port, i);
-                  }
-               }
-               break;
-         }
-      }
+		int retro_port;
+		for (retro_port = 0; retro_port <= 1; retro_port++)
+		{
+			switch (uae_devices[retro_port])
+			{
+			case RETRO_DEVICE_JOYPAD:
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_UP );
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_DOWN );
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_LEFT );
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_RIGHT );
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_B );
+				ProcessController( retro_port, RETRO_DEVICE_ID_JOYPAD_A );
+				break;
+			}
+		}
 
       // Mouse control
       uae_mouse_l[0]=uae_mouse_r[0]=uae_mouse_m[0]=0;
