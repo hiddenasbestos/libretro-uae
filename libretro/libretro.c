@@ -764,12 +764,12 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-    log_cb(RETRO_LOG_INFO, "[libretro-uae]: Eject disk\n");
+	log_cb(RETRO_LOG_INFO, "[libretro-uae]: Eject disk\n");
 	disk_eject(0);
 
-   if (emuThread)
-      co_delete(emuThread);
-   emuThread = 0;
+	if (emuThread)
+		co_delete(emuThread);
+	emuThread = 0;
 
 	// Clean the m3u storage
 	if (dc)

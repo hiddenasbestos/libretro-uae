@@ -1,5 +1,7 @@
 TARGET_NAME := puae_a500
 
+DEBUG := 1
+
 PLATFLAGS :=
 
 ifeq ($(platform),)
