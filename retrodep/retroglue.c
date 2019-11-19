@@ -34,6 +34,7 @@ extern int pix_bytes;
 #define LOG_MSG2(...)
 
 extern retro_log_printf_t log_cb;
+extern retro_audio_sample_batch_t audio_batch_cb;
 
 extern int defaultw;
 extern int defaulth;
@@ -50,7 +51,6 @@ unsigned short int clut[] = {
 unsigned short int* pixbuf = NULL;
 
 extern unsigned short int bmp[1024*1024];
-void retro_audio_cb(short l, short r);
 
 int prefs_changed = 0;
 int vsync_enabled = 0;
@@ -136,10 +136,7 @@ int retro_renderSound(short* samples, int sampleCount)
     if (sampleCount < 1)
         return 0;
 
-    for(i=0; i<sampleCount; i+=2)
-    {
-        retro_audio_cb(samples[i], samples[i+1]);
-    }
+	audio_batch_cb( samples, sampleCount/2 );
 }
 
 void retro_flush_screen( struct vidbuf_description *gfxinfo, int ystart, int yend )

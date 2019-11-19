@@ -78,8 +78,8 @@ static char buf[64][4096]={0};
 #endif
 
 static retro_video_refresh_t video_cb;
-static retro_audio_sample_t audio_cb;
-static retro_audio_sample_batch_t audio_batch_cb;
+retro_audio_sample_t audio_cb;
+retro_audio_sample_batch_t audio_batch_cb;
 static retro_environment_t environ_cb;
 
 const char *retro_save_directory;
@@ -565,9 +565,7 @@ static bool disk_set_image_index(unsigned index)
 
 		if ((index < dc->count) && (dc->files[index]))
 		{
-			changed_prefs.floppyslots[0].df[0] = 0;
 			disk_eject(0);
-			DISK_check_change();
 
 			dc->index = index;
 			log_cb(RETRO_LOG_INFO, "Disk(%d) changed into drive DF0: %s\n", dc->index+1, dc->files[dc->index]);
@@ -578,6 +576,7 @@ static bool disk_set_image_index(unsigned index)
 				changed_prefs.floppyslots[0].dfxtype = 0;
 				DISK_check_change();
 			}
+
 			changed_prefs = currprefs;
 			strcpy (changed_prefs.floppyslots[0].df,dc->files[dc->index]);
 			DISK_check_change();
