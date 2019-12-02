@@ -36,9 +36,7 @@ extern int pix_bytes;
 extern retro_log_printf_t log_cb;
 extern retro_audio_sample_batch_t audio_batch_cb;
 
-extern int defaultw;
-extern int defaulth;
-
+extern int libretro_frame_y_start;
 extern int libretro_frame_end;
 
 unsigned short int clut[] = {
@@ -141,6 +139,10 @@ int retro_renderSound(short* samples, int sampleCount)
 
 void retro_flush_screen( struct vidbuf_description *gfxinfo, int ystart, int yend )
 {
+	// log_cb( RETRO_LOG_INFO, "[retro_flush_screen] Y range: %d -> %d\n", ystart, yend );
+
+//	libretro_frame_y_start = ystart;
+
 	// flag that we should end the frame, return out of retro_run.
 	libretro_frame_end = 1;
 }
@@ -174,14 +176,10 @@ int graphics_init(void) {
 	if (pixbuf != NULL) {
 		return 1;
 	}
-	currprefs.gfx_size_win.width = defaultw;
+	
+	currprefs.gfx_size_win.width = retrow;
+	currprefs.gfx_size_win.height = retroh_emu;
 
-#ifdef ENABLE_LOG_SCREEN
-	currprefs.gfx_height = 256;
-	currprefs.gfx_linedbl = 0;	//disable line doubling
-#else
-	currprefs.gfx_size_win.height = defaulth;
-#endif
 	opt_scrw = currprefs.gfx_size_win.width;
 	opt_scrh = currprefs.gfx_size_win.height;
 
@@ -194,11 +192,8 @@ int graphics_init(void) {
 	LOG_MSG2("screen w=%i", currprefs.gfx_size_win.width);
 	LOG_MSG2("screen h=%i", currprefs.gfx_size_win.height);
 
-#ifdef ENABLE_LOG_SCREEN
-	pixbuf = (unsigned int*) malloc(currprefs.gfx_size_win.width * 576 * pix_bytes);
-#else
 	pixbuf = (unsigned short int*) &bmp[0];
-#endif
+
 	//printf("graphics init: pixbuf=%p color_mode=%d width=%d height=%d\n", pixbuf, currprefs.color_mode, currprefs.gfx_size_win.width, currprefs.gfx_size_win.height);
 	if (pixbuf == NULL) {
 		printf("Error: not enough memory to initialize screen buffer!\n");
@@ -293,8 +288,8 @@ int check_prefs_changed_gfx (void)
     else
         return 0;
 
-    changed_prefs.gfx_size_win.width = defaultw;
-    changed_prefs.gfx_size_win.height = defaulth;
+    changed_prefs.gfx_size_win.width = retrow;
+    changed_prefs.gfx_size_win.height = retroh_emu;
 
     currprefs.gfx_size_win.width    = changed_prefs.gfx_size_win.width;
     currprefs.gfx_size_win.height   = changed_prefs.gfx_size_win.height;

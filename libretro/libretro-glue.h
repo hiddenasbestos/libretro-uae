@@ -14,8 +14,8 @@
 #endif
 
 extern int retrow;
-extern int retroh;
-extern int zoomed_height;
+extern int retroh_emu;
+extern int retroh_out;
 extern bool retro_update_av_info(bool, bool, bool);
 
 #define LOGI printf

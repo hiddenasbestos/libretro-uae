@@ -24,7 +24,7 @@ static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 retro_log_printf_t log_cb = fallback_log;
 
 #define EMULATOR_DEF_WIDTH 720
-#define EMULATOR_DEF_HEIGHT 568
+#define EMULATOR_DEF_HEIGHT 576
 #define EMULATOR_MAX_WIDTH 1024
 #define EMULATOR_MAX_HEIGHT 1024
 
@@ -35,10 +35,12 @@ retro_log_printf_t log_cb = fallback_log;
 #error EMULATOR_DEF_WIDTH || EMULATOR_DEF_HEIGHT
 #endif
 
-int defaultw = EMULATOR_DEF_WIDTH;
-int defaulth = EMULATOR_DEF_HEIGHT;
-int retrow = 0;
-int retroh = 0;
+int retrow = EMULATOR_DEF_WIDTH;
+int retroh_out = EMULATOR_DEF_HEIGHT;
+int retroh_emu = EMULATOR_DEF_HEIGHT;
+
+int libretro_frame_y_start = 0;
+
 char key_state[512];
 char key_state2[512];
 bool opt_use_whdload_hdf = false;
@@ -342,22 +344,21 @@ static void update_variables(void)
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
 	{
-		/* video_config change only at start */
-		if (video_config_old == 0)
+		if (firstpass)
 		{
 			if (strcmp(var.value, "PAL") == 0)
 			{
-				video_config |= PUAE_VIDEO_PAL;
-				video_config &= ~PUAE_VIDEO_NTSC;
+				video_config = PUAE_VIDEO_PAL_HI;
 				strcat(uae_config, "ntsc=false\n");
 			}
 			else
 			{
-				video_config |= PUAE_VIDEO_NTSC;
-				video_config &= ~PUAE_VIDEO_PAL;
+				video_config = PUAE_VIDEO_NTSC_HI;
 				strcat(uae_config, "ntsc=true\n");
 				real_ntsc = true;
 			}
+
+			LOGI( "[libretro-uae] update_variables specifies video_config %d", video_config );
         }
 	}
 
@@ -447,39 +448,8 @@ static void update_variables(void)
         opt_use_whdload_hdf = false;
    }
 
-
-   // Setting resolution
-   // According to PUAE configuration.txt :
-   //
-   // To emulate a high-resolution, fully overscanned PAL screen - either
-   // non-interlaced with line-doubling, or interlaced - you need to use a
-   // display of at least 720 by 568 pixels. If you specify a smaller size,
-   // E-UAE's display will be clipped to fit (and you can use the gfx_center_*
-   // options - see below - to centre the clipped region of the display).
-   // Similarly, to fully display an over-scanned lo-res PAL screen, you need a
-   // display of 360 by 284 pixels.
-   //
-   // So, here are the standard resolutions :
-   // - **360x284**: PAL Low resolution
-   // - **360x240**: NTSC Low resolution
-   // - **720x568**: PAL High resolution
-   // - **720x480**: NTSC High resolution
-   switch(video_config)
-   {
-		case PUAE_VIDEO_PAL_HI:
-			defaultw = 720;
-			defaulth = 568;
-			strcat(uae_config, "gfx_lores=false\n");
-			strcat(uae_config, "gfx_linemode=double\n");
-			break;
-
-		case PUAE_VIDEO_NTSC_HI:
-			defaultw = 720;
-			defaulth = 480;
-			strcat(uae_config, "gfx_lores=false\n");
-			strcat(uae_config, "gfx_linemode=double\n");
-			break;
-   }
+	strcat(uae_config, "gfx_lores=false\n");
+	strcat(uae_config, "gfx_linemode=double\n");
 
    /* Always update av_info geometry */
    request_update_av_info = true;
@@ -868,34 +838,37 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
    }
 
    /* Geometry dimensions */
-   switch(video_config_geometry)
+   switch( video_config_geometry )
    {
-      case PUAE_VIDEO_PAL_HI:
-         retrow = 720;
-         retroh = 568;
-         break;
+	case PUAE_VIDEO_PAL:
+	case PUAE_VIDEO_PAL_HI:
+		retrow = 720;
+		retroh_emu = 576;
+		retroh_out = 576;
+		libretro_frame_y_start = 0;
+		break;
 
-      case PUAE_VIDEO_NTSC_HI:
-         retrow = 720;
-         retroh = 480;
-         break;
-   }
-
-   /* When the actual dimensions change and not just the view */
-   if (change_timing)
-   {
-      defaultw = retrow;
-      defaulth = retroh;
-   }
+	case PUAE_VIDEO_NTSC:
+	case PUAE_VIDEO_NTSC_HI:
+		retrow = 720;
+		retroh_emu = 576;//486
+		retroh_out = 400;
+		libretro_frame_y_start = 86;
+		break;
+	}
 
    static struct retro_system_av_info new_av_info;
    new_av_info.geometry.base_width = retrow;
-   new_av_info.geometry.base_height = retroh;
+   new_av_info.geometry.base_height = retroh_out;
 
    if (video_config_geometry & PUAE_VIDEO_NTSC)
-      new_av_info.geometry.aspect_ratio=(float)retrow/(float)retroh * 44.0/52.0;
+   {
+	   new_av_info.geometry.aspect_ratio=1.5;
+   }
    else
-      new_av_info.geometry.aspect_ratio=(float)retrow/(float)retroh;
+   {
+	   new_av_info.geometry.aspect_ratio=4.0/3.0;
+   }
 
    /* Disable Hz change if not allowed */
    if (!video_config_allow_hz_change)
@@ -904,30 +877,33 @@ bool retro_update_av_info(bool change_geometry, bool change_timing, bool isntsc)
    /* Logging */
    if (change_geometry && change_timing)
    {
-      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update av_info: %dx%d %0.4fHz, video_config:%d\n", retrow, retroh, hz, video_config_geometry);
+      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update av_info: %dx%d %0.4fHz, video_config:%d\n", retrow, retroh_out, hz, video_config_geometry);
    }
    else if (change_geometry && !change_timing)
    {
-      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update geometry: %dx%d, video_config:%d\n", retrow, retroh, video_config_geometry);
+      log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update geometry: %dx%d, video_config:%d\n", retrow, retroh_out, video_config_geometry);
    }
    else if (!change_geometry && change_timing)
    {
       log_cb(RETRO_LOG_INFO, "[libretro-uae]: Update timing: %0.4fHz, video_config:%d\n", hz, video_config_geometry);
    }
 
-   if (change_timing) {
+   if (change_timing)
+   {
       struct retro_system_av_info new_timing;
       retro_get_system_av_info(&new_timing);
       new_timing.timing.fps = hz;
       environ_cb(RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO, &new_timing);
    }
 
-   if (change_geometry) {
+   if ( change_geometry )
+   {
       environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &new_av_info);
    }
 
    /* No need to check changed gfx at startup */
-   if (firstpass != 1) {
+   if (firstpass != 1)
+   {
       prefs_changed = 1; // Triggers check_prefs_changed_gfx() in vsync_handle_check()
    }
 
@@ -955,14 +931,15 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 
    static struct retro_game_geometry geom;
    geom.base_width=retrow;
-   geom.base_height=retroh;
+   geom.base_height=retroh_out;
    geom.max_width=EMULATOR_MAX_WIDTH;
    geom.max_height=EMULATOR_MAX_HEIGHT;
 
    if (retro_get_region() == RETRO_REGION_NTSC)
-      geom.aspect_ratio=(float)retrow/(float)retroh * 44.0/52.0;
+      geom.aspect_ratio=(float)retrow/(float)retroh_out * 44.0/52.0;
    else
-      geom.aspect_ratio=(float)retrow/(float)retroh;
+      geom.aspect_ratio=(float)retrow/(float)retroh_out;
+   
    info->geometry = geom;
 
    info->timing.sample_rate = 44100.0;
@@ -1011,12 +988,26 @@ void retro_run(void)
    if (request_update_av_info)
       retro_update_av_info(1, 0, 0);
 
+	unsigned bmp_offset;
+	
+	// sane value?
+	/*if ( libretro_frame_y_start < 100 )
+	{
+		bmp_offset = libretro_frame_y_start;
+	}
+	else*/
+	{
+		bmp_offset = libretro_frame_y_start;
+	}
+
+	bmp_offset = bmp_offset * ( retrow << (pix_bytes / 4) );
+
 	if (firstpass)
 	{
-		log_cb(RETRO_LOG_INFO, "[libretro-uae] firstpass complete. Starting UAE %s\n", RPATH );
+		log_cb(RETRO_LOG_INFO, "[libretro-uae] firstpass complete. Starting UAE with config file: '%s'\n", RPATH );
 		firstpass=0;
 
-		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
+		video_cb(bmp + bmp_offset, retrow, retroh_out, retrow << (pix_bytes / 2));
 
 		// run emulation first pass.
 		m68k_go( 1, 0 );
@@ -1024,7 +1015,8 @@ void retro_run(void)
 	else
 	{
 		retro_poll_event();
-		video_cb(bmp, retrow, retroh, retrow << (pix_bytes / 2));
+		
+		video_cb(bmp + bmp_offset, retrow, retroh_out, retrow << (pix_bytes / 2));
 
 		// resume emulation for a frame.
 		m68k_go( 1, 1 );
@@ -1035,18 +1027,14 @@ void retro_run(void)
 #define FDI_FILE_EXT "fdi"
 #define DMS_FILE_EXT "dms"
 #define IPF_FILE_EXT "ipf"
-#define ZIP_FILE_EXT "zip"
 #define HDF_FILE_EXT "hdf"
 #define HDZ_FILE_EXT "hdz"
-#define UAE_FILE_EXT "uae"
 #define M3U_FILE_EXT "m3u"
 #define LIBRETRO_PUAE_CONF "puae_libretro.uae"
 #define WHDLOAD_HDF "WHDLoad.hdf"
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   int w = 0, h = 0;
-
    RPATH[0] = '\0';
 
    if (info)
@@ -1058,12 +1046,11 @@ bool retro_load_game(const struct retro_game_info *info)
          || strendswith(full_path, FDI_FILE_EXT)
          || strendswith(full_path, DMS_FILE_EXT)
          || strendswith(full_path, IPF_FILE_EXT)
-         || strendswith(full_path, ZIP_FILE_EXT)
          || strendswith(full_path, HDF_FILE_EXT)
          || strendswith(full_path, HDZ_FILE_EXT)
          || strendswith(full_path, M3U_FILE_EXT))
 	  {
-	     log_cb(RETRO_LOG_INFO, "Game '%s' is a disk, a hard drive image or a m3u file.\n", full_path);
+	     log_cb(RETRO_LOG_INFO, "Game '%s' is a disk or a playlist.\n", full_path);
 
 	     path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
 	     log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
@@ -1081,19 +1068,7 @@ bool retro_load_game(const struct retro_game_info *info)
             // Write common config
             fprintf(configfile, uae_config);
 
-            // If region was specified in the name of the game
-            if (strstr(full_path, "(NTSC)") != NULL)
-            {
-               log_cb(RETRO_LOG_INFO, "Found '(NTSC)' in filename '%s'\n", full_path);
-               fprintf(configfile, "ntsc=true\n");
-            }
-            else if (strstr(full_path, "(PAL)") != NULL)
-            {
-               log_cb(RETRO_LOG_INFO, "Found '(PAL)' in filename '%s'\n", full_path);
-               fprintf(configfile, "ntsc=false\n");
-            }
-
-            // Verify kickstart
+             // Verify kickstart
             if (!file_exists(kickstart))
             {
                // Kickstart rom not found
@@ -1164,50 +1139,6 @@ bool retro_load_game(const struct retro_game_info *info)
             return false;
          }
       }
-      // If argument is an uae file
-	  else if (strendswith(full_path, UAE_FILE_EXT))
-	  {
-	     log_cb(RETRO_LOG_INFO, "Game '%s' is an UAE config file.\n", full_path);
-
-	     // Prepend default config
-	     path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
-	     log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
-
-	     // Open tmp config file
-	     FILE * configfile;
-
-	     if (configfile = fopen(RPATH, "w"))
-	     {
-	        char kickstart[RETRO_PATH_MAX];
-
-	        fprintf(configfile, uae_machine);
-	        path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
-
-	        // Write common config
-	        fprintf(configfile, uae_config);
-	        fprintf(configfile, "kickstart_rom_file=%s\n", (const char*)&kickstart);
-
-	        // Iterate parsed file and append all rows to the temporary config
-	        FILE * configfile_custom;
-
-	        char filebuf[4096];
-	        if (configfile_custom = fopen (full_path, "r"))
-	        {
-	           while (fgets(filebuf, sizeof(filebuf), configfile_custom))
-	           {
-	              fprintf(configfile, filebuf);
-               }
-               fclose(configfile_custom);
-            }
-            fclose(configfile);
-         }
-         else
-         {
-            // Error
-            log_cb(RETRO_LOG_ERROR, "Error while writing '%s' file.\n", (const char*)&RPATH);
-            return false;
-         }
-      }
 	  // Other extensions
 	  else
 	  {
@@ -1251,16 +1182,6 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-   if (w<=0 || h<=0 || w>EMULATOR_MAX_WIDTH || h>EMULATOR_MAX_HEIGHT)
-   {
-      w = defaultw;
-      h = defaulth;
-   }
-
-   log_cb(RETRO_LOG_INFO, "[libretro-uae]: Resolution selected: %dx%d (default: %dx%d)\n", w, h, defaultw, defaulth);
-
-   retrow = w;
-   retroh = h;
    memset(bmp, 0, sizeof(bmp));
    Screen_SetFullUpdate();
 
