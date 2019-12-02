@@ -796,9 +796,9 @@ void retro_get_system_info(struct retro_system_info *info)
 {
    memset(info, 0, sizeof(*info));
 #if FORCE_MACHINE==500
-   info->library_name     = "PUAE (A500)";
+   info->library_name     = "PUAE A500";
 #endif // FORCE_MACHINE
-   info->library_version  = "2.6.1 " GIT_VERSION;
+   info->library_version  = "2.6.1 " GIT_VERSION " (" __DATE__ ")";
    info->need_fullpath    = true;
    info->block_extract    = false;
    info->valid_extensions = "adf|m3u";
