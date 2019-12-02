@@ -388,18 +388,19 @@ static void update_variables(void)
    }
 */
 
-	strcat(uae_config, "sound_output=3\n"); // exact
-	strcat(uae_config, "sound_filter=1\n"); // FILTER_SOUND_EMUL
-	strcat(uae_config, "sound_filter_type=0\n"); // A500
-//	strcat(uae_config, "sound_filter_type=1\n"); // A1200
-	strcat(uae_config, "sound_interpol=0\n"); // 'none' (see changed_prefs.sound_interpol for others)
+	strcat(uae_config, "sound_output=exact\n");
+	strcat(uae_config, "sound_channels=stereo\n");
+	strcat(uae_config, "sound_filter=emulated\n"); // FILTER_SOUND_EMUL
+	strcat(uae_config, "sound_filter_type=standard\n"); // A500
+//	strcat(uae_config, "sound_filter_type=enhanced\n"); // A1200
+	strcat(uae_config, "sound_interpol=none\n"); // 'none' (see changed_prefs.sound_interpol for others)
 	strcat(uae_config, "floppy_volume=100\n"); /* 100 is mute, 0 is max */
 	strcat(uae_config, "floppy0sound=1\n");
 	strcat(uae_config, "floppy1sound=1\n");
 	strcat(uae_config, "floppy2sound=1\n");
 	strcat(uae_config, "floppy3sound=1\n");
 
-	strcat(uae_config, "collision_level=2\n"); // sprites&playfields (recommended default)
+	strcat(uae_config, "collision_level=playfields\n"); // sprites&playfields (recommended default)
 /*
    var.key = "puae_collision_level";
    var.value = NULL;
