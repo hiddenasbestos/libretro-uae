@@ -631,11 +631,11 @@ void retro_init(void)
 
    const char *system_dir = NULL;
 
-   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
-   {
-     // if defined, use the system directory
-     retro_system_directory=system_dir;
-   }
+	if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
+	{
+		// if defined, use the system directory
+		retro_system_directory=system_dir;
+	}
 
    const char *content_dir = NULL;
 
@@ -723,15 +723,20 @@ void retro_init(void)
 
 void retro_deinit(void)
 {
-	log_cb(RETRO_LOG_INFO, "[libretro-uae]: Eject disk\n");
-	disk_eject(0);
-
-	log_cb(RETRO_LOG_INFO, "[libretro-uae]: UAE 'leave_program' call\n");
-	leave_program();
+	if ( firstpass == 0 )
+	{
+		log_cb(RETRO_LOG_INFO, "[libretro-uae]: UAE 'leave_program' call\n");
+		leave_program();
+	}
 
 	// Clean the m3u storage
 	if (dc)
+	{
+		log_cb(RETRO_LOG_INFO, "[libretro-uae]: Eject disk\n");
+		disk_eject(0);
+		
 		dc_free(dc);
+	}
 }
 
 unsigned retro_api_version(void)
@@ -1036,7 +1041,20 @@ void retro_run(void)
 
 bool retro_load_game(const struct retro_game_info *info)
 {
-   RPATH[0] = '\0';
+	// Verify kickstart
+	char kickstart[RETRO_PATH_MAX];
+	path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
+
+	if ( !file_exists( kickstart ) )
+	{
+		// Kickstart rom not found
+		log_cb( RETRO_LOG_ERROR, "Kickstart rom '%s' not found.\n", (const char*)&kickstart );
+		log_cb( RETRO_LOG_ERROR, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", uae_kickstart );
+		
+		return false;
+	}
+
+	RPATH[0] = '\0';
 
    if (info)
    {
@@ -1051,8 +1069,6 @@ bool retro_load_game(const struct retro_game_info *info)
          || strendswith(full_path, HDZ_FILE_EXT)
          || strendswith(full_path, M3U_FILE_EXT))
 	  {
-	     log_cb(RETRO_LOG_INFO, "Game '%s' is a disk or a playlist.\n", full_path);
-
 	     path_join((char*)&RPATH, retro_save_directory, LIBRETRO_PUAE_CONF);
 	     log_cb(RETRO_LOG_INFO, "Generating temporary uae config file '%s'.\n", (const char*)&RPATH);
 
@@ -1060,24 +1076,11 @@ bool retro_load_game(const struct retro_game_info *info)
 	     FILE * configfile;
 	     if (configfile = fopen(RPATH, "w"))
 	     {
-	        char kickstart[RETRO_PATH_MAX];
-
 			// No machine specified, we will use the configured one
 			fprintf(configfile, uae_machine);
-			path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
-
+			
             // Write common config
             fprintf(configfile, uae_config);
-
-             // Verify kickstart
-            if (!file_exists(kickstart))
-            {
-               // Kickstart rom not found
-               log_cb(RETRO_LOG_ERROR, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
-               log_cb(RETRO_LOG_ERROR, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
-               fclose(configfile);
-               return false;
-            }
 
             fprintf(configfile, "kickstart_rom_file=%s\n", (const char*)&kickstart);
 
@@ -1158,26 +1161,9 @@ bool retro_load_game(const struct retro_game_info *info)
       FILE * configfile;
       if (configfile = fopen(RPATH, "w"))
       {
-         char kickstart[RETRO_PATH_MAX];
-
-         // No machine specified we will use the configured one
-         printf("No machine specified. Booting default configuration.\n");
-         fprintf(configfile, uae_machine);
-         path_join((char*)&kickstart, retro_system_directory, uae_kickstart);
-
          // Write common config
+         fprintf(configfile, uae_machine);
          fprintf(configfile, uae_config);
-
-         // Verify kickstart
-         if (!file_exists(kickstart))
-         {
-            // Kickstart rom not found
-            log_cb(RETRO_LOG_ERROR, "Kickstart rom '%s' not found.\n", (const char*)&kickstart);
-            log_cb(RETRO_LOG_ERROR, "You must have a correct kickstart file ('%s') in your RetroArch system directory.\n", kickstart);
-            fclose(configfile);
-            return false;
-         }
-
          fprintf(configfile, "kickstart_rom_file=%s\n", (const char*)&kickstart);
          fclose(configfile);
       }
