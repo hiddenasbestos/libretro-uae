@@ -50,10 +50,7 @@ bool fake_ntsc = false;
 bool real_ntsc = false;
 bool request_update_av_info = false;
 
-#if defined(NATMEM_OFFSET)
-extern uae_u8 *natmem_offset;
-extern uae_u32 natmem_size;
-#endif
+
 unsigned short int bmp[EMULATOR_MAX_WIDTH*EMULATOR_MAX_HEIGHT];
 extern int SHIFTON;
 extern char RPATH[512];
@@ -64,6 +61,10 @@ unsigned int video_config_old = 0;
 unsigned int video_config_geometry = 0;
 unsigned int video_config_allow_hz_change = 0;
 unsigned int inputdevice_finalized = 0;
+
+// memory.c
+extern uint8_t *chipmemory;
+extern unsigned allocated_chipmem;
 
 static char *uae_argv[] = { "puae", RPATH };
 
@@ -1275,19 +1276,25 @@ bool retro_unserialize(const void *data_, size_t size)
 
 void *retro_get_memory_data(unsigned id)
 {
-#if defined(NATMEM_OFFSET)
-   if ( id == RETRO_MEMORY_SYSTEM_RAM )
-      return natmem_offset;
-#endif
+   switch ( id & RETRO_MEMORY_MASK )
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return chipmemory;
+   }
+
+   /* not supported */
    return NULL;
 }
 
 size_t retro_get_memory_size(unsigned id)
 {
-#if defined(NATMEM_OFFSET)
-   if ( id == RETRO_MEMORY_SYSTEM_RAM )
-      return natmem_size;
-#endif
+   switch ( id & RETRO_MEMORY_MASK )
+   {
+      case RETRO_MEMORY_SYSTEM_RAM:
+         return allocated_chipmem;
+   }
+
+   /* not supported */
    return 0;
 }
 
