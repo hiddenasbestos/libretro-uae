@@ -15,6 +15,7 @@
 
 #include "libretro.h"
 extern retro_log_printf_t log_cb;
+extern retro_environment_t environ_cb;
 
 void gui_disk_image_change (int unitnum, const TCHAR *name, bool writeprotected) {}
 
@@ -44,6 +45,20 @@ void gui_fps (int fps, int idle, int color)
 
 void gui_led (int led, int on)
 {
+	if ( environ_cb )
+	{
+		if ( on )
+		{
+			led -= LED_DF0;
+		}
+		else
+		{
+			led = -1; /* off */
+		}
+
+		environ_cb( RETRO_ENVIRONMENT_DISK_DRIVE_LED_BLINK, &led );
+//		log_cb( RETRO_LOG_INFO, "BLINK:DF%c; ", "0123"[led] );
+	}
 }
 
 void gui_hd_led (int led)

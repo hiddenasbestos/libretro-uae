@@ -83,7 +83,7 @@ static char buf[64][4096]={0};
 static retro_video_refresh_t video_cb;
 retro_audio_sample_t audio_cb;
 retro_audio_sample_batch_t audio_batch_cb;
-static retro_environment_t environ_cb;
+retro_environment_t environ_cb;
 
 const char *retro_save_directory;
 const char *retro_system_directory;
